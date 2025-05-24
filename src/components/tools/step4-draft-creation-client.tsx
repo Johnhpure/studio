@@ -50,7 +50,13 @@ export default function Step4DraftCreationClient() {
     if (typeof window !== 'undefined') {
       setClientRequirements(localStorage.getItem(LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS) || "未找到甲方核心需求。");
       setCreativeOutline(localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE) || "未找到创作大纲。");
-      setWritingStyleGuide(localStorage.getItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT) || "未找到写作风格指引。");
+      
+      const styleReport = localStorage.getItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT);
+      if (styleReport && styleReport.trim() !== "") {
+        setWritingStyleGuide(styleReport);
+      } else {
+        setWritingStyleGuide("（已跳过风格学习，将使用通用专业风格）");
+      }
       
       const metadataStr = localStorage.getItem(LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA);
       if (metadataStr) {
@@ -93,18 +99,22 @@ export default function Step4DraftCreationClient() {
   const handleGenerateDraft = async () => {
     if (!clientRequirements || clientRequirements === "未找到甲方核心需求。" ||
         !creativeOutline || creativeOutline === "未找到创作大纲。" ||
-        !writingStyleGuide || writingStyleGuide === "未找到写作风格指引。" ||
         !outlineMetadata) {
-      toast({ title: "创作要素不完整", description: "请确保已完成步骤一、二、三，并获取了所有必要的创作输入信息。", variant: "destructive" });
+      toast({ title: "创作要素不完整", description: "请确保已完成步骤一、二，并获取了所有必要的创作输入信息。", variant: "destructive" });
       return;
     }
+     // writingStyleGuide can be the placeholder if skipped
 
     setIsLoading(true);
     try {
+      const actualWritingStyleGuide = (writingStyleGuide === "（已跳过风格学习，将使用通用专业风格）" || !writingStyleGuide.trim()) 
+                                     ? undefined 
+                                     : writingStyleGuide;
+
       const input: GenerateDraftInput = {
         clientRequirements,
         creativeOutline,
-        writingStyleGuide,
+        writingStyleGuide: actualWritingStyleGuide,
         manuscriptType: outlineMetadata.manuscriptType,
         brand: outlineMetadata.selectedBrand,
         wordCount: outlineMetadata.wordCount,
@@ -150,14 +160,14 @@ export default function Step4DraftCreationClient() {
       });
   };
 
-  const ReviewItem = ({ title, content, icon: Icon }: { title: string; content: string; icon?: React.ElementType }) => (
+  const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
     <div className="mb-3">
       <Label className="text-sm font-medium flex items-center mb-1">
         {Icon && <Icon className="mr-2 h-4 w-4 text-muted-foreground" />}
         {title}
       </Label>
-      <ScrollArea className="min-h-[80px] max-h-[18vh] w-full rounded-md border p-2 bg-muted/30 text-xs prose dark:prose-invert max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ScrollArea className="min-h-[80px] max-h-[18vh] w-full rounded-md border p-2 bg-muted/30 text-xs prose-xs dark:prose-invert max-w-none">
+        {isMarkdown ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown> : <pre className="whitespace-pre-wrap">{content}</pre>}
       </ScrollArea>
     </div>
   );
@@ -173,13 +183,13 @@ export default function Step4DraftCreationClient() {
           <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} />
           <ReviewItem title="创作大纲 (步骤二)" content={creativeOutline} icon={ListChecks} />
           {outlineMetadata && (
-            <div className="text-xs p-2 border rounded-md bg-muted/30 mb-3">
+            <div className="text-xs p-2 border rounded-md bg-muted/30 mb-3 prose-xs dark:prose-invert max-w-none">
               <p><strong>稿件类型:</strong> {outlineMetadata.manuscriptType}</p>
               <p><strong>目标品牌:</strong> {outlineMetadata.selectedBrand}</p>
               <p><strong>期望字数:</strong> {outlineMetadata.wordCount.toString()}</p>
             </div>
           )}
-          <ReviewItem title="写作风格指引 (步骤三)" content={writingStyleGuide} icon={Palette} />
+          <ReviewItem title="写作风格指引 (步骤三)" content={writingStyleGuide} icon={Palette} isMarkdown={writingStyleGuide !== "（已跳过风格学习，将使用通用专业风格）"} />
           
           <div>
             <div className="flex justify-between items-center mb-1">
@@ -197,7 +207,7 @@ export default function Step4DraftCreationClient() {
                 </Button>
             </div>
             {isPreviewingTempInstructions ? (
-                 <ScrollArea className="rounded-md border p-2 bg-muted/30 text-xs flex-1 min-h-[80px] max-h-[18vh] prose dark:prose-invert max-w-none">
+                 <ScrollArea className="rounded-md border p-2 bg-muted/30 text-xs flex-1 min-h-[80px] max-h-[18vh] prose-xs dark:prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{tempFineTuneInstructions || "指令预览..."}</ReactMarkdown>
                  </ScrollArea>
             ) : (
@@ -277,3 +287,5 @@ export default function Step4DraftCreationClient() {
     </div>
   );
 }
+
+    

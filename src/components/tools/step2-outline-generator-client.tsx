@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3 } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
 import ReactMarkdown from 'react-markdown';
@@ -26,6 +26,7 @@ const LOCAL_STORAGE_KEY_WORD_COUNT_OPTION = "step2_wordCountOption";
 const LOCAL_STORAGE_KEY_CUSTOM_WORD_COUNT = "step2_customWordCount";
 const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
 const LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA = "step2_finalOutline_metadata";
+const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 
 
 const MANUSCRIPT_TYPES = ["预热品牌稿", "品牌稿", "产品稿", "行业稿", "预热稿", "新闻通稿", "活动稿"] as const;
@@ -100,6 +101,7 @@ export default function Step2OutlineGeneratorClient() {
 
     setIsLoading(true);
     setGeneratedOutline(""); 
+    setEditedOutline("");
     try {
       const wordCountValue = wordCountOption === "自定义" ? parseInt(customWordCount) : wordCountOption;
       const input: GenerateOutlineInput = {
@@ -120,11 +122,11 @@ export default function Step2OutlineGeneratorClient() {
       setIsLoading(false);
     }
   };
-
-  const handleConfirmOutline = () => {
+  
+  const prepareForNextStep = () => {
     if (!editedOutline.trim()) {
       toast({ title: "大纲内容为空", description: "请确保大纲不为空再进入下一步。", variant: "destructive" });
-      return;
+      return false;
     }
     
     localStorage.setItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE, editedOutline);
@@ -134,9 +136,23 @@ export default function Step2OutlineGeneratorClient() {
         wordCount: wordCountOption === "自定义" ? customWordCount : wordCountOption,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA, JSON.stringify(metadata));
+    return true;
+  };
 
-    toast({ title: "大纲已确认", description: "正在前往下一步。" });
+  const handleConfirmOutline = () => {
+    if (!prepareForNextStep()) return;
+    toast({ title: "大纲已确认", description: "正在前往风格学习步骤。" });
     router.push('/step3-style-learning'); 
+  };
+
+  const handleSkipToStep4 = () => {
+    if (!prepareForNextStep()) return;
+    // Clear any existing style report as we are skipping Step 3
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT);
+    }
+    toast({ title: "大纲已确认，跳过风格学习", description: "正在前往初稿创作步骤。" });
+    router.push('/step4-draft-creation');
   };
 
   const handleCopyOutline = () => {
@@ -286,14 +302,18 @@ export default function Step2OutlineGeneratorClient() {
               placeholder="AI生成的大纲将显示在此处，您可以直接编辑..."
               value={editedOutline}
               onChange={(e) => setEditedOutline(e.target.value)}
-              className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30" // Ensure it takes up space
+              className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30" 
             />
         )}
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleConfirmOutline} className="w-full" disabled={!editedOutline.trim() || isLoading}>
+      <CardFooter className="flex flex-col sm:flex-row gap-2 pt-4">
+        <Button onClick={handleConfirmOutline} className="w-full sm:w-auto flex-1" disabled={!editedOutline.trim() || isLoading}>
           <ArrowRight className="mr-2 h-4 w-4" />
-          确认大纲并进入下一步
+          确认大纲并学习风格 (下一步)
+        </Button>
+        <Button onClick={handleSkipToStep4} variant="outline" className="w-full sm:w-auto flex-1" disabled={!editedOutline.trim() || isLoading}>
+          <SkipForward className="mr-2 h-4 w-4" />
+          跳过风格学习，直接创作初稿
         </Button>
       </CardFooter>
     </Card>
@@ -305,3 +325,5 @@ export default function Step2OutlineGeneratorClient() {
     </div>
   );
 }
+
+    
