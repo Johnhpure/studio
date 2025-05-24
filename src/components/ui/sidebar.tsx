@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet" // Added SheetTitle import
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet" // Added SheetTitle and SheetDescription
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -208,6 +208,8 @@ const Sidebar = React.forwardRef<
             side={side}
           >
             <SheetTitle className="sr-only">主导航</SheetTitle>
+            {/* Adding a visually hidden description for better accessibility */}
+            <SheetDescription className="sr-only">应用的主要导航菜单。</SheetDescription>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
