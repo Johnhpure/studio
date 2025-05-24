@@ -13,15 +13,15 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Settings, FileText, SearchCheck, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare } from "lucide-react";
+import { Settings, FileText, SearchCheck, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope } from "lucide-react"; // Added Microscope
 
 const navItems = [
   { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList },
   { href: "/step2-outline-generator", label: "步骤二：大纲构建", icon: DraftingCompass },
   // { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit },
-  { href: "/draft-generator", label: "草稿生成 (步4)", icon: FileText }, // Placeholder for Step 4
-  { href: "/signature-analyzer", label: "特征分析 (步5)", icon: SearchCheck }, // Placeholder for Step 5
-  { href: "/refinement", label: "AI 优化 (步6)", icon: Sparkles }, // Placeholder for Step 6
+  { href: "/draft-generator", label: "草稿生成 (步4)", icon: FileText }, 
+  { href: "/step5-ai-analysis", label: "步骤五：特征分析", icon: Microscope }, // Updated for Step 5
+  { href: "/refinement", label: "AI 优化 (步6)", icon: Sparkles }, 
   // { href: "/step7-final-edit", label: "步骤七：人工定稿", icon: CheckCircle },
 ];
 
@@ -46,7 +46,10 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href || (item.href === "/step1-requirements" && pathname === "/distiller")}
+                isActive={pathname === item.href || 
+                           (item.href === "/step1-requirements" && pathname === "/distiller") ||
+                           (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") // Handle old route for active state
+                          }
                 tooltip={{ children: item.label, side: "right", align: "center" }}
               >
                 <Link href={item.href}>
