@@ -13,16 +13,16 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope, FileCheck } from "lucide-react"; // Added FileCheck
+import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope, FileCheck, BrainCircuit, PenSquare } from "lucide-react"; // Added BrainCircuit, PenSquare
 
 const navItems = [
   { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList },
   { href: "/step2-outline-generator", label: "步骤二：大纲构建", icon: DraftingCompass },
-  // { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit }, // To be implemented
-  { href: "/draft-generator", label: "草稿生成 (旧)", icon: FileText }, 
+  { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit },
+  { href: "/step4-draft-creation", label: "步骤四：AI初稿创作", icon: PenSquare }, 
   { href: "/step5-ai-analysis", label: "步骤五：特征分析", icon: Microscope },
   { href: "/step6-ai-elimination", label: "步骤六：AI消除", icon: Sparkles },
-  { href: "/step7-final-polishing", label: "步骤七：人工定稿", icon: FileCheck }, // Added Step 7
+  { href: "/step7-final-polishing", label: "步骤七：人工定稿", icon: FileCheck },
 ];
 
 
@@ -48,6 +48,7 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.href || 
                            (item.href === "/step1-requirements" && pathname === "/distiller") ||
+                           (item.href === "/step4-draft-creation" && pathname === "/draft-generator") || // Point old draft generator to new step 4
                            (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") || 
                            (item.href === "/step6-ai-elimination" && pathname === "/refinement") 
                           }
@@ -82,3 +83,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+    
