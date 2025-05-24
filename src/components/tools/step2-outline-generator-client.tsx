@@ -131,9 +131,8 @@ export default function Step2OutlineGeneratorClient() {
     };
     localStorage.setItem(LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA, JSON.stringify(metadata));
 
-    toast({ title: "大纲已确认", description: "正在前往下一步。" }); // Next step is TBD (Step 3 or 4)
-    // router.push('/step3-style-learning'); // Navigate to Step 3 (to be created)
-     alert("下一步骤（风格学习/初稿创作）尚未实现。"); // Placeholder
+    toast({ title: "大纲已确认", description: "正在前往下一步。" });
+    router.push('/step3-style-learning'); 
   };
 
   const leftPane = (
@@ -154,7 +153,7 @@ export default function Step2OutlineGeneratorClient() {
           <CardTitle>您的创作指令与参数</CardTitle>
           <CardDescription>请提供详细的创作指令，并选择相关参数，以指导AI生成符合要求的大纲。</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto">
+        <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto max-h-[calc(60vh-4rem)]">
           <div className="grid gap-1.5 flex-shrink-0">
             <Label htmlFor="userInstructions">创作要求与指令</Label>
             <Textarea
@@ -207,7 +206,7 @@ export default function Step2OutlineGeneratorClient() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex-shrink-0">
+        <CardFooter className="flex-shrink-0 mt-auto pt-4">
           <Button onClick={handleGenerateOutline} disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Wand2 className="mr-2 h-4 w-4" />}
             {isLoading ? "生成中..." : "AI生成稿件大纲"}
@@ -243,8 +242,10 @@ export default function Step2OutlineGeneratorClient() {
   );
 
   return (
-    <div className="h-[calc(100vh-8rem)] p-1 md:p-0">
+    <div className="h-[calc(100vh-8rem)] p-1 md:p-0"> {/* Adjusted height for better overall layout */}
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
     </div>
   );
 }
+
+    
