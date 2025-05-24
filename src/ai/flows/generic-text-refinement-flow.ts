@@ -67,7 +67,7 @@ const refineTextWithPromptFlow = ai.defineFlow(
     const { output } = await ai.generate({
         prompt: finalPromptString,
         output: { schema: RefineTextWithPromptOutputSchema },
-        model: 'googleai/gemini-2.0-flash' // Or your configured model
+        model: 'googleai/gemini-2.5-pro-preview-05-06' 
     });
     
     if (!output) {
