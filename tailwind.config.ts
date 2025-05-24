@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -82,11 +83,16 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'bobble': { // Added bobble keyframes
+          '0%, 100%': { transform: 'translateY(-4px) rotate(-3deg)' },
+          '50%': { transform: 'translateY(4px) rotate(3deg)' },
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'bobble': 'bobble 3s ease-in-out infinite', // Added bobble animation
   		}
   	}
   },
