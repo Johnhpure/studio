@@ -11,7 +11,7 @@ import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation"; // Updated import if path changes
+import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
@@ -65,10 +65,7 @@ export default function Step4DraftCreationClient() {
 
       setTempFineTuneInstructions(localStorage.getItem(LOCAL_STORAGE_KEY_STEP4_TEMP_INSTRUCTIONS) || "");
       
-      // Load draft being worked on, if any
       const currentDraft = localStorage.getItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT);
-      // Check if this draft likely originated from this step or a later step.
-      // For now, if a draft exists, we assume it's the one to work with.
       if (currentDraft) {
         setGeneratedDraft(currentDraft);
       }
@@ -103,7 +100,6 @@ export default function Step4DraftCreationClient() {
     }
 
     setIsLoading(true);
-    // setGeneratedDraft(""); // Clear previous draft before generating a new one
     try {
       const input: GenerateDraftInput = {
         clientRequirements,
@@ -145,7 +141,7 @@ export default function Step4DraftCreationClient() {
         {Icon && <Icon className="mr-2 h-4 w-4 text-muted-foreground" />}
         {title}
       </Label>
-      <ScrollArea className="h-20 w-full rounded-md border p-2 bg-muted/30 text-xs">
+      <ScrollArea className="min-h-[80px] max-h-[18vh] w-full rounded-md border p-2 bg-muted/30 text-xs">
         <pre className="whitespace-pre-wrap break-all">{content}</pre>
       </ScrollArea>
     </div>
@@ -180,7 +176,7 @@ export default function Step4DraftCreationClient() {
               placeholder="针对本次初稿生成，输入临时的、额外的指令..."
               value={tempFineTuneInstructions}
               onChange={(e) => setTempFineTuneInstructions(e.target.value)}
-              className="text-xs resize-none min-h-[60px] max-h-[15vh]"
+              className="text-xs resize-none min-h-[80px] max-h-[18vh] w-full"
             />
           </div>
         </CardContent>
@@ -227,5 +223,3 @@ export default function Step4DraftCreationClient() {
     </div>
   );
 }
-
-    
