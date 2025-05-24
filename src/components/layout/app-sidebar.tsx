@@ -13,16 +13,16 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope } from "lucide-react"; // Added Microscope
+import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope, FileCheck } from "lucide-react"; // Added FileCheck
 
 const navItems = [
   { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList },
   { href: "/step2-outline-generator", label: "步骤二：大纲构建", icon: DraftingCompass },
-  // { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit },
+  // { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit }, // To be implemented
   { href: "/draft-generator", label: "草稿生成 (旧)", icon: FileText }, 
   { href: "/step5-ai-analysis", label: "步骤五：特征分析", icon: Microscope },
-  { href: "/step6-ai-elimination", label: "步骤六：AI消除", icon: Sparkles }, // Updated for Step 6
-  // { href: "/step7-final-edit", label: "步骤七：人工定稿", icon: CheckCircle },
+  { href: "/step6-ai-elimination", label: "步骤六：AI消除", icon: Sparkles },
+  { href: "/step7-final-polishing", label: "步骤七：人工定稿", icon: FileCheck }, // Added Step 7
 ];
 
 
@@ -48,8 +48,8 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.href || 
                            (item.href === "/step1-requirements" && pathname === "/distiller") ||
-                           (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") || // Handle old route for active state
-                           (item.href === "/step6-ai-elimination" && pathname === "/refinement") // Handle old route for active state
+                           (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") || 
+                           (item.href === "/step6-ai-elimination" && pathname === "/refinement") 
                           }
                 tooltip={{ children: item.label, side: "right", align: "center" }}
               >
