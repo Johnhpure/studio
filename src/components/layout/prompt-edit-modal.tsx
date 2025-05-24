@@ -55,7 +55,7 @@ export function PromptEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[70vw] lg:max-w-[60vw] max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-[80vw] lg:max-w-[70vw] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>编辑“{stepTitle}”的AI提示词模板</DialogTitle>
           <DialogDescription>
@@ -96,3 +96,4 @@ export function PromptEditModal({
     </Dialog>
   );
 }
+
