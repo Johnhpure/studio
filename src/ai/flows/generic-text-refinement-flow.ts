@@ -12,14 +12,14 @@ import {z} from 'genkit';
 import Handlebars from 'handlebars';
 
 // Input schema for the flow
-export const RefineTextWithPromptInputSchema = z.object({
+const RefineTextWithPromptInputSchema = z.object({
   originalText: z.string().describe('The original text to be refined. 【原始内容】'),
   userPrompt: z.string().describe('The user-provided prompt to guide the refinement. 【用户指令】'),
 });
 export type RefineTextWithPromptInput = z.infer<typeof RefineTextWithPromptInputSchema>;
 
 // Output schema for the flow AND for ai.generate
-export const RefineTextWithPromptOutputSchema = z.object({
+const RefineTextWithPromptOutputSchema = z.object({
   refinedText: z.string().describe('The text after refinement based on the user prompt. 【优化后文本】'),
 });
 export type RefineTextWithPromptOutput = z.infer<typeof RefineTextWithPromptOutputSchema>;
@@ -77,3 +77,4 @@ const refineTextWithPromptFlow = ai.defineFlow(
     return output; 
   }
 );
+
