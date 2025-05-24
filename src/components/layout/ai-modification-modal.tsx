@@ -40,14 +40,13 @@ export function AiModificationModal({
   const [currentUserPrompt, setCurrentUserPrompt] = useState('');
   const [refinedContentResult, setRefinedContentResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOriginalContentCollapsed, setIsOriginalContentCollapsed] = useState(false); // New state for collapse
+  const [isOriginalContentCollapsed, setIsOriginalContentCollapsed] = useState(false); // State for collapse
   const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
       setRefinedContentResult(null);
-      // Optionally reset currentUserPrompt if desired when modal opens
-      // setCurrentUserPrompt(""); 
+      // setCurrentUserPrompt(""); // Optionally reset prompt
       // setIsOriginalContentCollapsed(false); // Optionally reset collapse state on open
     }
   }, [isOpen]);
@@ -109,7 +108,7 @@ export function AiModificationModal({
 
         {/* Container for scrollable content areas */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4 py-2">
-          {/* Original Content Display */}
+          {/* Original Content Display - Now Collapsible */}
           <div className={isOriginalContentCollapsed ? "flex-none" : "flex-1 flex flex-col min-h-0"}>
             <div className="flex justify-between items-center mb-1 shrink-0">
               <Label className="text-sm font-medium">原始内容 (只读)</Label>
