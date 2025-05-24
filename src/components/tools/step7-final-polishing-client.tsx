@@ -31,9 +31,10 @@ export default function Step7FinalPolishingClient() {
   }, []);
 
   const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFinalDraft(e.target.value);
+    const newDraft = e.target.value;
+    setFinalDraft(newDraft);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, e.target.value);
+      localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, newDraft);
     }
   };
 
@@ -80,16 +81,16 @@ export default function Step7FinalPolishingClient() {
           <CardTitle className="flex items-center"><Info className="mr-2 h-5 w-5 text-blue-500" />关键信息回顾</CardTitle>
           <CardDescription>在此查阅甲方需求和您确认的创作大纲。</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-4">
+        <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto">
           <div>
             <Label htmlFor="clientReqReview" className="text-sm font-medium">甲方核心需求 (步骤一)</Label>
-            <ScrollArea className="h-[150px] md:h-[200px] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
+            <ScrollArea className="h-full max-h-[35vh] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
               <pre className="whitespace-pre-wrap break-all">{clientRequirements}</pre>
             </ScrollArea>
           </div>
           <div>
             <Label htmlFor="outlineReview" className="text-sm font-medium">创作大纲 (步骤二)</Label>
-            <ScrollArea className="h-[150px] md:h-[200px] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
+            <ScrollArea className="h-full max-h-[35vh] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
                <pre className="whitespace-pre-wrap break-all">{creativeOutline}</pre>
             </ScrollArea>
           </div>
@@ -117,7 +118,7 @@ export default function Step7FinalPolishingClient() {
           placeholder="在此处加载并编辑您的稿件..."
           value={finalDraft}
           onChange={handleDraftChange}
-          className="flex-1 resize-none text-sm min-h-[calc(100vh-20rem)] bg-background" // Adjusted min-height
+          className="flex-1 resize-none text-sm min-h-[300px] max-h-[70vh] bg-background"
         />
       </CardContent>
       <CardFooter className="flex justify-end">

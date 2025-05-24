@@ -44,11 +44,11 @@ export default function Step1RequirementsClient() {
       title: "需求已保存",
       description: "甲方核心需求已保存到浏览器本地存储。",
     });
-    router.push('/step2-outline-generator'); // Navigate to step 2
+    router.push('/step2-outline-generator'); 
   };
 
   return (
-    <Card className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
+    <Card className="flex-1 flex flex-col max-w-3xl mx-auto w-full h-full">
       <CardHeader>
         <CardTitle>步骤一：输入甲方核心需求</CardTitle>
         <CardDescription>请在此处粘贴甲方对稿件的核心需求文本内容。这些信息将作为后续AI智能辅助的基础。</CardDescription>
@@ -58,7 +58,7 @@ export default function Step1RequirementsClient() {
           placeholder="在此处粘贴甲方需求..."
           value={clientRequirements}
           onChange={(e) => setClientRequirements(e.target.value)}
-          className="flex-1 resize-none text-sm min-h-[200px] max-h-[70vh] w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm placeholder-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="flex-1 resize-none text-sm min-h-[300px] max-h-[70vh] w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm placeholder-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <Button onClick={handleNextStep} className="mt-4 w-full">
           <ArrowRight className="mr-2 h-4 w-4" />

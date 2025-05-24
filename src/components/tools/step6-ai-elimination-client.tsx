@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
 const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions";
-const LOCAL_STORAGE_KEY_APP_USER_STYLE = "app_userWritingStyleReport"; // Assuming Step 3 saves style here
+const LOCAL_STORAGE_KEY_APP_USER_STYLE = "app_userWritingStyleReport"; 
 
 const LOCAL_STORAGE_KEY_STEP6_EXTRA_INSTRUCTIONS = "step6_extraInstructions";
 const LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT = "step6_refinedDraft";
@@ -27,7 +27,7 @@ export default function Step6AiEliminationClient() {
 
   const [draftToRefine, setDraftToRefine] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState("");
-  const [userWritingStyle, setUserWritingStyle] = useState(""); // For Step 3 integration
+  const [userWritingStyle, setUserWritingStyle] = useState(""); 
   const [extraInstructions, setExtraInstructions] = useState("");
   const [refinedDraft, setRefinedDraft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,16 +43,16 @@ export default function Step6AiEliminationClient() {
           if (Array.isArray(parsedSuggestions)) {
             setAiSuggestions(parsedSuggestions.join("\n"));
           } else {
-            setAiSuggestions(suggestionsFromStorage); // Fallback if not JSON array
+            setAiSuggestions(suggestionsFromStorage); 
           }
         } catch (e) {
-           setAiSuggestions(suggestionsFromStorage); // Fallback if not JSON
+           setAiSuggestions(suggestionsFromStorage); 
         }
       } else {
         setAiSuggestions("");
       }
       
-      setUserWritingStyle(localStorage.getItem(LOCAL_STORAGE_KEY_APP_USER_STYLE) || ""); // Load user style
+      setUserWritingStyle(localStorage.getItem(LOCAL_STORAGE_KEY_APP_USER_STYLE) || ""); 
       setExtraInstructions(localStorage.getItem(LOCAL_STORAGE_KEY_STEP6_EXTRA_INSTRUCTIONS) || "");
       setRefinedDraft(localStorage.getItem(LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT) || "");
     }
@@ -81,7 +81,6 @@ export default function Step6AiEliminationClient() {
     }
 
     setIsLoading(true);
-    // setRefinedDraft(""); // Clear previous output before new generation
     try {
       let guidance = "";
       if (aiSuggestions.trim()) {
@@ -94,10 +93,9 @@ export default function Step6AiEliminationClient() {
         guidance += `请参考并尽量维持以下用户写作风格 (来自步骤三):\n${userWritingStyle.trim()}\n\n`;
       }
 
-
       const input: AiAssistedRefinementInput = {
         draftText: draftToRefine,
-        guidance: guidance.trim() || undefined, // Pass combined guidance or undefined
+        guidance: guidance.trim() || undefined, 
       };
       const result = await aiAssistedRefinement(input);
       setRefinedDraft(result.refinedText);
@@ -131,15 +129,17 @@ export default function Step6AiEliminationClient() {
   };
 
   const handleProceedToFinalPolishing = () => {
-    if (!refinedDraft.trim()) {
-      toast({ title: "优化后的稿件为空", description: "请先生成优化稿件或确保稿件不为空。", variant: "destructive" });
+    if (!refinedDraft.trim() && !draftToRefine.trim()) { // If nothing refined, but original draft exists, pass that.
+      toast({ title: "稿件为空", description: "请先生成或输入稿件内容。", variant: "destructive" });
       return;
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, refinedDraft);
+      // Prioritize refinedDraft, fallback to draftToRefine if refinement wasn't run or cleared
+      const draftToPass = refinedDraft.trim() ? refinedDraft : draftToRefine;
+      localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftToPass);
     }
     toast({ title: "准备就绪", description: "正在前往最终润色步骤..." });
-    router.push('/step7-final-polishing'); // Navigate to Step 7 (to be created)
+    router.push('/step7-final-polishing'); 
   };
 
 
@@ -151,7 +151,7 @@ export default function Step6AiEliminationClient() {
           <CardDescription>从步骤五传入的，等待进行AI特征消除的稿件。</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[150px] md:h-[200px] w-full rounded-md border p-3 bg-muted/50 text-sm">
+          <ScrollArea className="h-full max-h-[25vh] w-full rounded-md border p-3 bg-muted/50 text-sm">
             {draftToRefine || "请先在步骤五完成分析并传递稿件至此。"}
           </ScrollArea>
         </CardContent>
@@ -163,7 +163,7 @@ export default function Step6AiEliminationClient() {
           <CardDescription>步骤五生成的分析报告和建议，将指导本次优化。</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[100px] md:h-[150px] w-full rounded-md border p-3 bg-muted/50 text-sm">
+          <ScrollArea className="h-full max-h-[20vh] w-full rounded-md border p-3 bg-muted/50 text-sm">
             {aiSuggestions || "未找到AI优化建议。若适用，请先在步骤五生成。"}
           </ScrollArea>
         </CardContent>
@@ -181,7 +181,7 @@ export default function Step6AiEliminationClient() {
             placeholder="例如：请特别注意保持品牌调性一致，避免使用过于口语化的词汇..."
             value={extraInstructions}
             onChange={(e) => setExtraInstructions(e.target.value)}
-            className="min-h-[100px] resize-none text-sm flex-1"
+            className="resize-none text-sm flex-1 min-h-[100px] max-h-[20vh]"
           />
         </CardContent>
         <CardFooter>
@@ -212,12 +212,12 @@ export default function Step6AiEliminationClient() {
           id="refinedDraftOutput"
           placeholder="AI优化后的稿件将显示在此处..."
           value={refinedDraft}
-          onChange={(e) => setRefinedDraft(e.target.value)} // Allow editing of final output
-          className="flex-1 resize-none text-sm min-h-[calc(100%-80px)] bg-muted/30"
+          onChange={(e) => setRefinedDraft(e.target.value)} 
+          className="flex-1 resize-none text-sm min-h-[300px] max-h-[65vh] bg-muted/30"
         />
       </CardContent>
       <CardFooter>
-        <Button onClick={handleProceedToFinalPolishing} className="w-full" disabled={isLoading || !refinedDraft.trim()}>
+        <Button onClick={handleProceedToFinalPolishing} className="w-full" disabled={isLoading || (!refinedDraft.trim() && !draftToRefine.trim())}>
           <ArrowRight className="mr-2 h-4 w-4" />
           完成AI优化，进入最终润色
         </Button>

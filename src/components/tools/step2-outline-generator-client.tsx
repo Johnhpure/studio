@@ -36,9 +36,9 @@ export default function Step2OutlineGeneratorClient() {
 
   const [clientRequirements, setClientRequirements] = useState("");
   const [userInstructions, setUserInstructions] = useState("");
-  const [manuscriptType, setManuscriptType] = useState<string>(MANUSCRIPT_TYPES[5]); // Default: 新闻通稿
-  const [selectedBrand, setSelectedBrand] = useState<string>(BRANDS[0]); // Default: 添可
-  const [wordCountOption, setWordCountOption] = useState<string>(WORD_COUNT_OPTIONS[0]); // Default: 1500字
+  const [manuscriptType, setManuscriptType] = useState<string>(MANUSCRIPT_TYPES[5]); 
+  const [selectedBrand, setSelectedBrand] = useState<string>(BRANDS[0]); 
+  const [wordCountOption, setWordCountOption] = useState<string>(WORD_COUNT_OPTIONS[0]); 
   const [customWordCount, setCustomWordCount] = useState<string>("");
 
   const [generatedOutline, setGeneratedOutline] = useState("");
@@ -53,7 +53,11 @@ export default function Step2OutlineGeneratorClient() {
       setSelectedBrand(localStorage.getItem(LOCAL_STORAGE_KEY_SELECTED_BRAND) || BRANDS[0]);
       setWordCountOption(localStorage.getItem(LOCAL_STORAGE_KEY_WORD_COUNT_OPTION) || WORD_COUNT_OPTIONS[0]);
       setCustomWordCount(localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_WORD_COUNT) || "");
-      setEditedOutline(localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE) || "");
+      const initialEditedOutline = localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE);
+      if (initialEditedOutline) {
+        setEditedOutline(initialEditedOutline);
+        setGeneratedOutline(initialEditedOutline); // Assume if edited exists, it was based on a generation
+      }
     }
   }, []);
 
@@ -85,14 +89,13 @@ export default function Step2OutlineGeneratorClient() {
       toast({ title: "请输入自定义文章字数", variant: "destructive" });
       return;
     }
-    if (wordCountOption === "自定义" && isNaN(parseInt(customWordCount))) {
-      toast({ title: "自定义文章字数必须是数字", variant: "destructive" });
+    if (wordCountOption === "自定义" && (isNaN(parseInt(customWordCount)) || parseInt(customWordCount) <=0)) {
+      toast({ title: "自定义文章字数必须是正整数", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
-    setGeneratedOutline(""); // Clear previous outline
-    // setEditedOutline(""); // Also clear edited outline if re-generating
+    setGeneratedOutline(""); 
     try {
       const wordCountValue = wordCountOption === "自定义" ? parseInt(customWordCount) : wordCountOption;
       const input: GenerateOutlineInput = {
@@ -104,7 +107,7 @@ export default function Step2OutlineGeneratorClient() {
       };
       const result = await generateOutline(input);
       setGeneratedOutline(result.generatedOutline);
-      setEditedOutline(result.generatedOutline); // Populate editor with new outline
+      setEditedOutline(result.generatedOutline); 
       toast({ title: "成功", description: "稿件大纲已生成！您可以进行编辑。" });
     } catch (error) {
       console.error("Error generating outline:", error);
@@ -119,8 +122,8 @@ export default function Step2OutlineGeneratorClient() {
       toast({ title: "大纲内容为空", description: "请确保大纲不为空再进入下一步。", variant: "destructive" });
       return;
     }
-    // Save final outline and metadata
-    localStorage.setItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE, editedOutline); // Already saved by useEffect, but explicit save is fine.
+    
+    localStorage.setItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE, editedOutline);
     const metadata = {
         manuscriptType,
         selectedBrand,
@@ -128,8 +131,9 @@ export default function Step2OutlineGeneratorClient() {
     };
     localStorage.setItem(LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA, JSON.stringify(metadata));
 
-    toast({ title: "大纲已确认", description: "正在前往下一步：AI学习您的写作风格。" });
-    router.push('/step3-style-learning'); // Navigate to Step 3 (to be created)
+    toast({ title: "大纲已确认", description: "正在前往下一步。" }); // Next step is TBD (Step 3 or 4)
+    // router.push('/step3-style-learning'); // Navigate to Step 3 (to be created)
+     alert("下一步骤（风格学习/初稿创作）尚未实现。"); // Placeholder
   };
 
   const leftPane = (
@@ -140,7 +144,7 @@ export default function Step2OutlineGeneratorClient() {
           <CardDescription>步骤一输入的核心需求将作为大纲生成的重要依据。</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[150px] md:h-[200px] w-full rounded-md border p-3 bg-muted/50 text-sm">
+          <ScrollArea className="h-full max-h-[20vh] w-full rounded-md border p-3 bg-muted/50 text-sm">
             {clientRequirements || "未找到甲方核心需求，请返回步骤一输入。"}
           </ScrollArea>
         </CardContent>
@@ -150,18 +154,18 @@ export default function Step2OutlineGeneratorClient() {
           <CardTitle>您的创作指令与参数</CardTitle>
           <CardDescription>请提供详细的创作指令，并选择相关参数，以指导AI生成符合要求的大纲。</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-4">
-          <div className="grid gap-1.5 flex-1">
+        <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto">
+          <div className="grid gap-1.5 flex-shrink-0">
             <Label htmlFor="userInstructions">创作要求与指令</Label>
             <Textarea
               id="userInstructions"
               placeholder="输入您对稿件大纲结构、各部分侧重点等详细的创作要求和指令..."
               value={userInstructions}
               onChange={(e) => setUserInstructions(e.target.value)}
-              className="min-h-[100px] resize-none text-sm flex-1"
+              className="text-sm resize-none min-h-[120px] max-h-[30vh]"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
             <div>
               <Label htmlFor="manuscriptType">稿件类型</Label>
               <Select value={manuscriptType} onValueChange={setManuscriptType}>
@@ -181,7 +185,7 @@ export default function Step2OutlineGeneratorClient() {
               </Select>
             </div>
           </div>
-          <div>
+          <div className="flex-shrink-0">
             <Label>文章字数</Label>
             <RadioGroup value={wordCountOption} onValueChange={setWordCountOption} className="flex items-center space-x-4 mt-2">
               {WORD_COUNT_OPTIONS.map(option => (
@@ -194,15 +198,16 @@ export default function Step2OutlineGeneratorClient() {
             {wordCountOption === "自定义" && (
               <Input
                 type="number"
-                placeholder="输入期望字数"
+                placeholder="输入期望字数 (正整数)"
                 value={customWordCount}
                 onChange={(e) => setCustomWordCount(e.target.value)}
                 className="mt-2 w-full md:w-1/2"
+                min="1"
               />
             )}
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex-shrink-0">
           <Button onClick={handleGenerateOutline} disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Wand2 className="mr-2 h-4 w-4" />}
             {isLoading ? "生成中..." : "AI生成稿件大纲"}
@@ -225,7 +230,7 @@ export default function Step2OutlineGeneratorClient() {
           placeholder="AI生成的大纲将显示在此处，您可以直接编辑..."
           value={editedOutline}
           onChange={(e) => setEditedOutline(e.target.value)}
-          className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30"
+          className="flex-1 resize-none text-sm min-h-[300px] max-h-[65vh] bg-muted/30"
         />
       </CardContent>
       <CardFooter>
@@ -238,7 +243,7 @@ export default function Step2OutlineGeneratorClient() {
   );
 
   return (
-    <div className="h-[calc(100vh-8rem)] p-1 md:p-0"> {/* Adjusted height slightly */}
+    <div className="h-[calc(100vh-8rem)] p-1 md:p-0">
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
     </div>
   );

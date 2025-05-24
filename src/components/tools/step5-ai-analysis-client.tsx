@@ -9,13 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { aiSignatureAnalyzer, type AiSignatureAnalyzerInput } from "@/ai/flows/ai-signature-analyzer";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Microscope, Zap, Edit, Copy } from "lucide-react"; // Updated icons
+import { Loader2, Microscope, Zap, Edit, Copy } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 
-const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; // Common key for draft handoff
-const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; // Specific to this step for persistence
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // For passing suggestions to Step 6
+const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
+const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
 
 export default function Step5AiAnalysisClient() {
   const router = useRouter();
@@ -32,8 +32,6 @@ export default function Step5AiAnalysisClient() {
       
       if (draftFromPrevStep) {
         setDraftCopy(draftFromPrevStep);
-        // Optional: Clear the app_currentDraft after loading to prevent re-loading if user navigates back and forth
-        // localStorage.removeItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT); 
       } else if (savedDraftCopy) {
         setDraftCopy(savedDraftCopy);
       }
@@ -101,7 +99,7 @@ export default function Step5AiAnalysisClient() {
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, JSON.stringify(suggestions));
     toast({ title: "准备就绪", description: "正在前往AI特征消除步骤..." });
-    router.push('/step6-ai-elimination'); // Placeholder, Step 6 to be created
+    router.push('/step6-ai-elimination'); 
   };
 
   const handleSkipToFinalPolishing = () => {
@@ -110,10 +108,9 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
-    // No need to save suggestions if skipping elimination
     localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS); 
     toast({ title: "准备就绪", description: "正在跳至最终润色步骤..." });
-    router.push('/step7-final-polishing'); // Placeholder, Step 7 to be created
+    router.push('/step7-final-polishing'); 
   };
 
   const leftPane = (
@@ -130,7 +127,7 @@ export default function Step5AiAnalysisClient() {
             placeholder="请粘贴或输入待分析的稿件内容..."
             value={draftCopy}
             onChange={(e) => setDraftCopy(e.target.value)}
-            className="min-h-[calc(100%-100px)] resize-none text-sm flex-1" // Adjusted height
+            className="flex-1 resize-none text-sm min-h-[300px] max-h-[65vh]"
           />
         </div>
       </CardContent>
@@ -157,7 +154,7 @@ export default function Step5AiAnalysisClient() {
           </Button>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[150px] md:h-[200px] rounded-md border p-4 bg-muted/50 text-sm">
+          <ScrollArea className="h-full max-h-[30vh] rounded-md border p-4 bg-muted/50 text-sm">
             {analysis || "AI特征综合评估将显示在此处..."}
           </ScrollArea>
         </CardContent>
@@ -175,7 +172,7 @@ export default function Step5AiAnalysisClient() {
           </Button>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[150px] md:h-[200px] rounded-md border p-4 bg-muted/50 text-sm">
+          <ScrollArea className="h-full max-h-[30vh] rounded-md border p-4 bg-muted/50 text-sm">
             {suggestions.length > 0 ? (
               <ul className="space-y-2">
                 {suggestions.map((suggestion, index) => (
@@ -199,9 +196,8 @@ export default function Step5AiAnalysisClient() {
     </div>
   );
 
-
   return (
-    <div className="h-[calc(100vh-10rem)]"> {/* Ensure enough height for content + footer */}
+    <div className="h-[calc(100vh-10rem)]"> 
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
     </div>
   );
