@@ -8,19 +8,15 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 
 const pageTitles: { [key: string]: string } = {
-  "/step1-requirements": "步骤一：输入甲方核心需求", // Changed
-  "/distiller": "步骤一：输入甲方核心需求", // Fallback for old route
-  "/draft-generator": "AI 草稿生成", // Placeholder, will be Step 4
-  "/signature-analyzer": "AI 写作特征分析器", // Placeholder, will be Step 5
-  "/refinement": "AI 辅助优化", // Placeholder, will be Step 6
-  "/settings": "AI模型配置", // Updated title
-  // Future steps, to be added as implemented
-  // "/step2-outline-generator": "步骤二：稿件大纲生成",
+  "/step1-requirements": "步骤一：输入甲方核心需求",
+  "/step2-outline-generator": "步骤二：AI生成稿件创作大纲",
   // "/step3-style-learning": "步骤三：个性化风格学习",
-  // "/step4-draft-creation": "步骤四：AI智能初稿创作",
-  // "/step5-ai-signature": "步骤五：AI特征深度洞察",
-  // "/step6-ai-refinement": "步骤六：智能化AI痕迹消除",
+  "/draft-generator": "AI 草稿生成 (步骤四)",
+  "/signature-analyzer": "AI 写作特征分析器 (步骤五)",
+  "/refinement": "AI 辅助优化 (步骤六)",
   // "/step7-final-edit": "步骤七：专业人工最终定稿",
+  "/settings": "AI模型配置",
+  "/distiller": "步骤一：输入甲方核心需求", // Fallback for old route
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -29,12 +25,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const [defaultOpen, setDefaultOpen] = React.useState(true);
   React.useEffect(() => {
-    const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('sidebar_state='))
-      ?.split('=')[1];
-    if (cookieValue) {
-      setDefaultOpen(cookieValue === 'true');
+    if (typeof window !== 'undefined') {
+      const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('sidebar_state='))
+        ?.split('=')[1];
+      if (cookieValue) {
+        setDefaultOpen(cookieValue === 'true');
+      }
     }
   }, []);
 

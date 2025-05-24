@@ -44,7 +44,7 @@ export default function Step1RequirementsClient() {
       title: "需求已保存",
       description: "甲方核心需求已保存到浏览器本地存储。",
     });
-    router.push('/step2-outline-generator'); // Navigate to step 2 (page to be created)
+    router.push('/step2-outline-generator'); // Navigate to step 2
   };
 
   return (
@@ -58,7 +58,7 @@ export default function Step1RequirementsClient() {
           placeholder="在此处粘贴甲方需求..."
           value={clientRequirements}
           onChange={(e) => setClientRequirements(e.target.value)}
-          className="flex-1 resize-none text-sm min-h-[300px] md:min-h-[400px] lg:min-h-[500px]"
+          className="flex-1 resize-none text-sm min-h-[200px] max-h-[70vh] w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm placeholder-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <Button onClick={handleNextStep} className="mt-4 w-full">
           <ArrowRight className="mr-2 h-4 w-4" />

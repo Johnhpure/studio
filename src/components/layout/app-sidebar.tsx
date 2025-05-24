@@ -12,25 +12,18 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { AppLogo } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Settings, FileText, SearchCheck, Sparkles, BrainCircuit, ClipboardList, DraftingCompass, BotMessageSquare, CheckCircle } from "lucide-react"; // Added ClipboardList, DraftingCompass
+import { Settings, FileText, SearchCheck, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare } from "lucide-react";
 
 const navItems = [
-  { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList }, // Changed
-  { href: "/draft-generator", label: "草稿生成", icon: FileText }, // Placeholder for Step 4
-  { href: "/signature-analyzer", label: "特征分析器", icon: SearchCheck }, // Placeholder for Step 5
-  { href: "/refinement", label: "AI 优化", icon: Sparkles }, // Placeholder for Step 6
+  { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList },
+  { href: "/step2-outline-generator", label: "步骤二：大纲构建", icon: DraftingCompass },
+  // { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit },
+  { href: "/draft-generator", label: "草稿生成 (步4)", icon: FileText }, // Placeholder for Step 4
+  { href: "/signature-analyzer", label: "特征分析 (步5)", icon: SearchCheck }, // Placeholder for Step 5
+  { href: "/refinement", label: "AI 优化 (步6)", icon: Sparkles }, // Placeholder for Step 6
+  // { href: "/step7-final-edit", label: "步骤七：人工定稿", icon: CheckCircle },
 ];
-
-// Future steps placeholder icons and labels, can be integrated as implemented
-// { href: "/step2-outline-generator", label: "步骤二：大纲构建", icon: DraftingCompass },
-// { href: "/step3-style-learning", label: "步骤三：风格学习", icon: BrainCircuit }, // Re-using BrainCircuit or another
-// { href: "/step4-draft-creation", label: "步骤四：AI初稿", icon: FileText },
-// { href: "/step5-ai-signature", label: "步骤五：AI特征洞察", icon: SearchCheck },
-// { href: "/step6-ai-refinement", label: "步骤六：AI痕迹消除", icon: Sparkles },
-// { href: "/step7-final-edit", label: "步骤七：人工定稿", icon: CheckCircle },
 
 
 export function AppSidebar() {
@@ -40,7 +33,7 @@ export function AppSidebar() {
     <Sidebar side="left" variant="sidebar" collapsible="icon">
       <SidebarHeader className="p-4">
         <Link href="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <BotMessageSquare className="h-7 w-7 text-primary" /> {/* Changed icon to BotMessageSquare */}
+          <BotMessageSquare className="h-7 w-7 text-primary" />
           <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
             搞钱助手
           </span>
@@ -53,7 +46,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href || (item.href === "/step1-requirements" && pathname === "/distiller")} // Handle old route during transition
+                isActive={pathname === item.href || (item.href === "/step1-requirements" && pathname === "/distiller")}
                 tooltip={{ children: item.label, side: "right", align: "center" }}
               >
                 <Link href={item.href}>
@@ -72,7 +65,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                     asChild
                     isActive={pathname === "/settings"}
-                    tooltip={{ children: "AI模型配置", side: "right", align: "center" }} // Updated label
+                    tooltip={{ children: "AI模型配置", side: "right", align: "center" }}
                 >
                     <Link href="/settings">
                         <Settings />
