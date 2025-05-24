@@ -1,6 +1,7 @@
+
 import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  redirect('/distiller');
-  return null; // Redirect will prevent this from rendering
+  redirect('/step1-requirements'); // Redirect to the new Step 1 page
+  return null; 
 }
