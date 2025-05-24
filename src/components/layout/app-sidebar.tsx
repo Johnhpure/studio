@@ -13,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope, FileCheck, BrainCircuit, PenSquare } from "lucide-react"; // Added BrainCircuit, PenSquare
+import { Settings, FileText, Sparkles, ClipboardList, DraftingCompass, BotMessageSquare, Microscope, FileCheck, BrainCircuit, PenSquare } from "lucide-react";
 
 const navItems = [
   { href: "/step1-requirements", label: "步骤一：需求捕获", icon: ClipboardList },
@@ -25,9 +25,40 @@ const navItems = [
   { href: "/step7-final-polishing", label: "步骤七：人工定稿", icon: FileCheck },
 ];
 
+const progressLabels = [
+  "开始赚钱!",             // 0% (e.g., /settings page or initial load)
+  "需求捕获... ¥25 进度!",   // After Step 1 
+  "大纲构建... ¥50 进度!",   // After Step 2
+  "风格学习... ¥80 进度!",   // After Step 3
+  "AI初稿... ¥120 进度!",  // After Step 4
+  "特征分析... ¥150 进度!",  // After Step 5
+  "AI消除... ¥180 进度!",   // After Step 6
+  "搞定! ¥200 到手!",      // After Step 7 (100%)
+];
 
 export function AppSidebar() {
   const pathname = usePathname();
+
+  let currentStepIndex = -1;
+  navItems.forEach((item, index) => {
+    if (pathname === item.href || 
+        (item.href === "/step1-requirements" && pathname === "/distiller") ||
+        (item.href === "/step4-draft-creation" && pathname === "/draft-generator") ||
+        (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") || 
+        (item.href === "/step6-ai-elimination" && pathname === "/refinement")
+       ) {
+      currentStepIndex = index;
+    }
+  });
+
+  let progressPercent = 0;
+  let displayedLabel = progressLabels[0]; // Default
+
+  if (currentStepIndex !== -1) {
+    progressPercent = ((currentStepIndex + 1) / navItems.length) * 100;
+    displayedLabel = progressLabels[currentStepIndex + 1];
+  }
+
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
@@ -40,7 +71,7 @@ export function AppSidebar() {
         </Link>
         <p className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">敬若涵的创作助手</p>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-2 flex flex-col"> {/* Added flex flex-col */}
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
@@ -48,7 +79,7 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.href || 
                            (item.href === "/step1-requirements" && pathname === "/distiller") ||
-                           (item.href === "/step4-draft-creation" && pathname === "/draft-generator") || // Point old draft generator to new step 4
+                           (item.href === "/step4-draft-creation" && pathname === "/draft-generator") ||
                            (item.href === "/step5-ai-analysis" && pathname === "/signature-analyzer") || 
                            (item.href === "/step6-ai-elimination" && pathname === "/refinement") 
                           }
@@ -62,6 +93,31 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+
+        {/* Progress Section */}
+        <div className="mt-auto pt-6 group-data-[collapsible=icon]:hidden">
+          <div className="flex flex-col items-center px-2 py-3 space-y-2">
+            <p 
+              className="text-xs font-medium text-center text-sidebar-accent-foreground/90 h-8 flex items-center justify-center"
+              title={`当前进度: ${Math.round(progressPercent)}%`}
+            >
+              {displayedLabel}
+            </p>
+            <div 
+              className="relative h-32 w-2.5 bg-sidebar-foreground/20 rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={progressPercent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="创作进度"
+            > {/* Track */}
+              <div
+                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-all duration-300 ease-linear" /* Fill */
+                style={{ height: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
       </SidebarContent>
       <SidebarFooter className="p-2">
          <Separator className="my-2"/>
@@ -83,5 +139,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    
