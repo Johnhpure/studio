@@ -9,11 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, BrainCircuit } from "lucide-react"; // Changed icon to BrainCircuit
+import { Loader2, ArrowRight, Wand2, BrainCircuit, Copy } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { learnUserStyle, type LearnUserStyleInput } from "@/ai/flows/style-learning-flow"; // Ensure correct flow name
+import { learnUserStyle, type LearnUserStyleInput } from "@/ai/flows/style-learning-flow"; 
 
-const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manusCRIPT_SAMPLE"; // Corrected potential typo in key
+const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manuscriptSample";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 
 export default function Step3StyleLearningClient() {
@@ -48,7 +48,7 @@ export default function Step3StyleLearningClient() {
       return;
     }
     setIsLoading(true);
-    setStyleAnalysisReport(""); // Clear previous report
+    setStyleAnalysisReport(""); 
     try {
       const input: LearnUserStyleInput = { manuscriptSample };
       const result = await learnUserStyle(input);
@@ -67,9 +67,23 @@ export default function Step3StyleLearningClient() {
       toast({ title: "未生成风格报告", description: "请先让AI分析您的写作风格。", variant: "destructive" });
       return;
     }
-    // Report is already saved via useEffect/saveToLocalStorage
     toast({ title: "风格已确认", description: "正在前往下一步进行初稿创作。" });
     router.push('/step4-draft-creation'); 
+  };
+
+  const handleCopyReport = () => {
+    if (!styleAnalysisReport.trim()) {
+      toast({ title: "无内容可复制", description: "风格分析报告为空。", variant: "destructive" });
+      return;
+    }
+    navigator.clipboard.writeText(styleAnalysisReport)
+      .then(() => {
+        toast({ title: "复制成功", description: "风格分析报告已复制到剪贴板。" });
+      })
+      .catch(err => {
+        console.error("Failed to copy style report: ", err);
+        toast({ title: "复制失败", description: "无法复制风格分析报告。", variant: "destructive" });
+      });
   };
 
   const leftPane = (
@@ -99,9 +113,15 @@ export default function Step3StyleLearningClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader>
-        <CardTitle>AI生成的风格分析报告</CardTitle>
-        <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告 (Markdown格式)。</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle>AI生成的风格分析报告</CardTitle>
+            <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告 (Markdown格式)。</CardDescription>
+        </div>
+        <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading}>
+            <Copy className="h-4 w-4" />
+            <span className="sr-only">复制报告</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Label htmlFor="styleAnalysisReport" className="sr-only">风格分析报告展示区</Label>
@@ -124,5 +144,4 @@ export default function Step3StyleLearningClient() {
     </div>
   );
 }
-
     

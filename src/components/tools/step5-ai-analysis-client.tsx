@@ -15,13 +15,12 @@ import { Label } from "@/components/ui/label";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
 const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // This will store the full analysisReport
 
 export default function Step5AiAnalysisClient() {
   const router = useRouter();
   const [draftCopy, setDraftCopy] = useState("");
-  const [analysis, setAnalysis] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [analysisReport, setAnalysisReport] = useState(""); // Changed from analysis and suggestions
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -34,6 +33,11 @@ export default function Step5AiAnalysisClient() {
         setDraftCopy(draftFromPrevStep);
       } else if (savedDraftCopy) {
         setDraftCopy(savedDraftCopy);
+      }
+
+      const savedAnalysisReport = localStorage.getItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS);
+      if (savedAnalysisReport) {
+        setAnalysisReport(savedAnalysisReport);
       }
     }
   }, []);
@@ -55,13 +59,15 @@ export default function Step5AiAnalysisClient() {
     }
 
     setIsLoading(true);
-    setAnalysis("");
-    setSuggestions([]);
+    setAnalysisReport("");
     try {
       const input: AiSignatureAnalyzerInput = { draftCopy };
-      const result = await aiSignatureAnalyzer(input);
-      setAnalysis(result.analysis);
-      setSuggestions(result.suggestions);
+      // The flow now returns a single 'analysisReport' field
+      const result = await aiSignatureAnalyzer(input); 
+      setAnalysisReport(result.analysisReport);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, result.analysisReport);
+      }
       toast({
         title: "分析完成！",
         description: "AI特征检测与分析已完成。",
@@ -78,16 +84,16 @@ export default function Step5AiAnalysisClient() {
     }
   };
 
-  const handleCopyToClipboard = (textToCopy: string, type: string) => {
-    if (!textToCopy) {
-      toast({ title: `无${type}内容可复制`, variant: "destructive" });
+  const handleCopyAnalysisReport = () => {
+    if (!analysisReport.trim()) {
+      toast({ title: "无内容可复制", description: "分析报告为空。", variant: "destructive" });
       return;
     }
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => toast({ title: "成功！", description: `${type}已复制到剪贴板。` }))
+    navigator.clipboard.writeText(analysisReport)
+      .then(() => toast({ title: "成功！", description: "分析报告已复制到剪贴板。" }))
       .catch(err => {
-        console.error(`Failed to copy ${type}: `, err);
-        toast({ title: "复制失败", description: `无法复制${type}，请重试。`, variant: "destructive" });
+        console.error("Failed to copy analysis report: ", err);
+        toast({ title: "复制失败", description: "无法复制分析报告，请重试。", variant: "destructive" });
       });
   };
   
@@ -97,7 +103,10 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
-    localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, JSON.stringify(suggestions));
+    // Ensure analysisReport is saved if generated, otherwise it's already from localStorage
+    if (analysisReport.trim()) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport);
+    }
     toast({ title: "准备就绪", description: "正在前往AI特征消除步骤..." });
     router.push('/step6-ai-elimination'); 
   };
@@ -108,6 +117,7 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
+    // No need to save suggestions if skipping
     localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS); 
     toast({ title: "准备就绪", description: "正在跳至最终润色步骤..." });
     router.push('/step7-final-polishing'); 
@@ -145,43 +155,17 @@ export default function Step5AiAnalysisClient() {
       <Card className="flex-grow flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>AI特征综合评估</CardTitle>
-            <CardDescription>AI对稿件中AI写作特征的整体评估。</CardDescription>
+            <CardTitle>AI特征诊断与优化指南</CardTitle>
+            <CardDescription>AI对稿件的深度分析报告 (Markdown格式)。</CardDescription>
           </div>
-          <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(analysis, "分析结果")} disabled={!analysis || isLoading}>
+          <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading}>
             <Copy className="h-4 w-4" />
-             <span className="sr-only">复制分析结果</span>
+             <span className="sr-only">复制分析报告</span>
           </Button>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-full max-h-[30vh] rounded-md border p-4 bg-muted/50 text-sm">
-            {analysis || "AI特征综合评估将显示在此处..."}
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      <Card className="flex-grow flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>具体优化建议</CardTitle>
-            <CardDescription>针对识别到的AI特征，提出的具体修改建议。</CardDescription>
-          </div>
-           <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(suggestions.join("\n"), "建议列表")} disabled={suggestions.length === 0 || isLoading}>
-            <Copy className="h-4 w-4" />
-             <span className="sr-only">复制建议列表</span>
-          </Button>
-        </CardHeader>
-        <CardContent className="flex-1">
-          <ScrollArea className="h-full max-h-[30vh] rounded-md border p-4 bg-muted/50 text-sm">
-            {suggestions.length > 0 ? (
-              <ul className="space-y-2">
-                {suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-sm">{suggestion}</li>
-                ))}
-              </ul>
-            ) : (
-              "具体优化建议将显示在此处..."
-            )}
+          <ScrollArea className="h-full max-h-[calc(65vh-7rem)] rounded-md border p-4 bg-muted/50 text-sm">
+            <pre className="whitespace-pre-wrap break-all">{analysisReport || "AI分析报告将显示在此处..."}</pre>
           </ScrollArea>
         </CardContent>
       </Card>
@@ -202,3 +186,4 @@ export default function Step5AiAnalysisClient() {
     </div>
   );
 }
+    

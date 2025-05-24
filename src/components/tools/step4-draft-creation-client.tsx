@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
 
@@ -31,18 +31,12 @@ export default function Step4DraftCreationClient() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Inputs from previous steps (read-only display)
   const [clientRequirements, setClientRequirements] = useState("");
   const [creativeOutline, setCreativeOutline] = useState("");
   const [writingStyleGuide, setWritingStyleGuide] = useState("");
   const [outlineMetadata, setOutlineMetadata] = useState<OutlineMetadata | null>(null);
-
-  // Input for this step
   const [tempFineTuneInstructions, setTempFineTuneInstructions] = useState("");
-  
-  // Output of this step
   const [generatedDraft, setGeneratedDraft] = useState("");
-  
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -135,6 +129,21 @@ export default function Step4DraftCreationClient() {
     router.push(path);
   };
 
+  const handleCopyDraft = () => {
+    if (!generatedDraft.trim()) {
+      toast({ title: "无内容可复制", description: "稿件初稿为空。", variant: "destructive" });
+      return;
+    }
+    navigator.clipboard.writeText(generatedDraft)
+      .then(() => {
+        toast({ title: "复制成功", description: "稿件初稿已复制到剪贴板。" });
+      })
+      .catch(err => {
+        console.error("Failed to copy draft: ", err);
+        toast({ title: "复制失败", description: "无法复制稿件初稿。", variant: "destructive" });
+      });
+  };
+
   const ReviewItem = ({ title, content, icon: Icon }: { title: string; content: string; icon?: React.ElementType }) => (
     <div className="mb-3">
       <Label className="text-sm font-medium flex items-center mb-1">
@@ -158,7 +167,7 @@ export default function Step4DraftCreationClient() {
           <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} />
           <ReviewItem title="创作大纲 (步骤二)" content={creativeOutline} icon={ListChecks} />
           {outlineMetadata && (
-            <div className="text-xs p-2 border rounded-md bg-muted/30">
+            <div className="text-xs p-2 border rounded-md bg-muted/30 mb-3">
               <p><strong>稿件类型:</strong> {outlineMetadata.manuscriptType}</p>
               <p><strong>目标品牌:</strong> {outlineMetadata.selectedBrand}</p>
               <p><strong>期望字数:</strong> {outlineMetadata.wordCount.toString()}</p>
@@ -192,9 +201,15 @@ export default function Step4DraftCreationClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader>
-        <CardTitle className="text-lg">AI生成的稿件初稿</CardTitle>
-        <CardDescription>AI根据您的所有输入创作的初稿。您可在此编辑，然后选择后续操作。</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle className="text-lg">AI生成的稿件初稿</CardTitle>
+            <CardDescription>AI根据您的所有输入创作的初稿。您可在此编辑，然后选择后续操作。</CardDescription>
+        </div>
+        <Button variant="outline" size="icon" onClick={handleCopyDraft} disabled={!generatedDraft.trim() || isLoading}>
+            <Copy className="h-4 w-4" />
+            <span className="sr-only">复制初稿</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Label htmlFor="generatedDraftOutput" className="sr-only">稿件初稿编辑区</Label>
@@ -223,3 +238,4 @@ export default function Step4DraftCreationClient() {
     </div>
   );
 }
+    

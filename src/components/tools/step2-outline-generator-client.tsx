@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, ListChecks } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
 
@@ -56,7 +56,7 @@ export default function Step2OutlineGeneratorClient() {
       const initialEditedOutline = localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE);
       if (initialEditedOutline) {
         setEditedOutline(initialEditedOutline);
-        setGeneratedOutline(initialEditedOutline); // Assume if edited exists, it was based on a generation
+        setGeneratedOutline(initialEditedOutline); 
       }
     }
   }, []);
@@ -133,6 +133,21 @@ export default function Step2OutlineGeneratorClient() {
 
     toast({ title: "大纲已确认", description: "正在前往下一步。" });
     router.push('/step3-style-learning'); 
+  };
+
+  const handleCopyOutline = () => {
+    if (!editedOutline.trim()) {
+      toast({ title: "无内容可复制", description: "大纲编辑区为空。", variant: "destructive" });
+      return;
+    }
+    navigator.clipboard.writeText(editedOutline)
+      .then(() => {
+        toast({ title: "复制成功", description: "大纲内容已复制到剪贴板。" });
+      })
+      .catch(err => {
+        console.error("Failed to copy outline: ", err);
+        toast({ title: "复制失败", description: "无法复制大纲内容。", variant: "destructive" });
+      });
   };
 
   const leftPane = (
@@ -218,9 +233,15 @@ export default function Step2OutlineGeneratorClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader>
-        <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />AI生成的稿件大纲</CardTitle>
-        <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以在下方文本框中进行编辑和修改。</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />AI生成的稿件大纲</CardTitle>
+            <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以在下方文本框中进行编辑和修改。</CardDescription>
+        </div>
+        <Button variant="outline" size="icon" onClick={handleCopyOutline} disabled={!editedOutline.trim() || isLoading}>
+            <Copy className="h-4 w-4" />
+            <span className="sr-only">复制大纲</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Label htmlFor="editedOutline" className="mb-1.5">大纲编辑区 (Markdown)</Label>
@@ -242,10 +263,9 @@ export default function Step2OutlineGeneratorClient() {
   );
 
   return (
-    <div className="h-[calc(100vh-8rem)] p-1 md:p-0"> {/* Adjusted height for better overall layout */}
+    <div className="h-[calc(100vh-8rem)] p-1 md:p-0">
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
     </div>
   );
 }
-
     
