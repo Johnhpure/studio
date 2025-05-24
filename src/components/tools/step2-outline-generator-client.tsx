@@ -21,7 +21,7 @@ import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; 
 import { AiModificationModal } from "@/components/layout/ai-modification-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext"; 
-import { STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
+import { getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_USER_INSTRUCTIONS = "step2_userInstructions";
@@ -91,7 +91,9 @@ export default function Step2OutlineGeneratorClient() {
   }, [saveToLocalStorage]);
 
   useEffect(() => {
-    setEditedOutlineCharCount(editedOutline.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = editedOutline.match(chineseCharRegex);
+    setEditedOutlineCharCount(matches ? matches.length : 0);
   }, [editedOutline]);
 
   const handleGenerateOutline = async () => {

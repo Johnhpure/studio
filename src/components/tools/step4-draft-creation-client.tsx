@@ -18,7 +18,7 @@ import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { AiModificationModal } from "@/components/layout/ai-modification-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
+import { getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
@@ -102,7 +102,9 @@ export default function Step4DraftCreationClient() {
   }, [saveTempInstructions]);
 
   useEffect(() => {
-    setGeneratedDraftCharCount(generatedDraft.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = generatedDraft.match(chineseCharRegex);
+    setGeneratedDraftCharCount(matches ? matches.length : 0);
   }, [generatedDraft]);
 
   const handleGeneratedDraftChange = (newDraft: string) => {

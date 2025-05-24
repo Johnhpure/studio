@@ -17,7 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
+import { getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
 const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
@@ -57,7 +57,9 @@ export default function Step5AiAnalysisClient() {
   }, [draftCopy]);
 
   useEffect(() => {
-    setAnalysisReportCharCount(analysisReport.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = analysisReport.match(chineseCharRegex);
+    setAnalysisReportCharCount(matches ? matches.length : 0);
   }, [analysisReport]);
 
   const handleAnalyze = async () => {

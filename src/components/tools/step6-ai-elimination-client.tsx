@@ -16,7 +16,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
+import { getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
 const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
@@ -96,7 +96,9 @@ export default function Step6AiEliminationClient() {
   }, [saveUIDataToLocalStorage]);
 
   useEffect(() => {
-    setRefinedDraftCharCount(refinedDraft.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = refinedDraft.match(chineseCharRegex);
+    setRefinedDraftCharCount(matches ? matches.length : 0);
   }, [refinedDraft]);
 
   const handleRefinedDraftChange = (newDraft: string) => {

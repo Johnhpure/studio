@@ -35,7 +35,9 @@ export default function Step7FinalPolishingClient() {
   }, []);
 
   useEffect(() => {
-    setFinalDraftCharCount(finalDraft.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = finalDraft.match(chineseCharRegex);
+    setFinalDraftCharCount(matches ? matches.length : 0);
   }, [finalDraft]);
 
   const handleDraftChange = (newDraft: string) => {

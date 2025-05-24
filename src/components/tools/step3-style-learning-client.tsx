@@ -16,7 +16,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_3_STYLE_LEARNING_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
+import { getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manuscriptSample";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
@@ -55,7 +55,9 @@ export default function Step3StyleLearningClient() {
   }, [saveToLocalStorage]);
 
   useEffect(() => {
-    setReportCharCount(styleAnalysisReport.length);
+    const chineseCharRegex = /[\u4e00-\u9fa5]/g;
+    const matches = styleAnalysisReport.match(chineseCharRegex);
+    setReportCharCount(matches ? matches.length : 0);
   }, [styleAnalysisReport]);
 
   const handleAnalyzeStyle = async () => {
