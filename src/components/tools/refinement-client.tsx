@@ -1,14 +1,18 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { aiAssistedRefinement, type AiAssistedRefinementInput } from "@/ai/flows/ai-assisted-refinement";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkle } from "lucide-react";
+import { Loader2, Sparkle, Copy } from "lucide-react";
+
+const LOCAL_STORAGE_KEY_DRAFT_TEXT = "refinement_draftText";
+const LOCAL_STORAGE_KEY_STYLE_TRAITS = "refinement_styleTraits";
 
 export default function RefinementClient() {
   const [draftText, setDraftText] = useState("");
@@ -16,6 +20,31 @@ export default function RefinementClient() {
   const [refinedText, setRefinedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedDraftText = localStorage.getItem(LOCAL_STORAGE_KEY_DRAFT_TEXT);
+      if (savedDraftText) {
+        setDraftText(savedDraftText);
+      }
+      const savedStyleTraits = localStorage.getItem(LOCAL_STORAGE_KEY_STYLE_TRAITS);
+      if (savedStyleTraits) {
+        setStyleTraits(savedStyleTraits);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_KEY_DRAFT_TEXT, draftText);
+    }
+  }, [draftText]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_KEY_STYLE_TRAITS, styleTraits);
+    }
+  }, [styleTraits]);
 
   const handleRefine = async () => {
     if (!draftText.trim()) {
@@ -49,6 +78,24 @@ export default function RefinementClient() {
     }
   };
 
+  const handleCopyRefinedText = () => {
+    if (!refinedText) {
+      toast({
+        title: "无内容可复制",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigator.clipboard.writeText(refinedText)
+      .then(() => {
+        toast({ title: "成功！", description: "优化后的文本已复制到剪贴板。" });
+      })
+      .catch(err => {
+        console.error("Failed to copy text: ", err);
+        toast({ title: "错误", description: "复制失败，请重试。", variant: "destructive" });
+      });
+  };
+
   const leftPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
@@ -77,7 +124,7 @@ export default function RefinementClient() {
             className="min-h-[80px] resize-none text-sm"
           />
         </div>
-        <Button onClick={handleRefine} disabled={isLoading} className="w-full">
+        <Button onClick={handleRefine} disabled={isLoading} className="w-full mt-auto">
           {isLoading ? <Loader2 className="animate-spin" /> : <Sparkle />}
           <span>{isLoading ? "优化中..." : "优化文本"}</span>
         </Button>
@@ -87,9 +134,15 @@ export default function RefinementClient() {
 
   const rightPane = (
     <Card className="flex-1 flex flex-col">
-      <CardHeader>
-        <CardTitle>优化后的文本</CardTitle>
-        <CardDescription>改进后的文本，风格增强，AI 特征减少。</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>优化后的文本</CardTitle>
+          <CardDescription>改进后的文本，风格增强，AI 特征减少。</CardDescription>
+        </div>
+        <Button variant="outline" size="icon" onClick={handleCopyRefinedText} disabled={!refinedText || isLoading}>
+          <Copy className="h-4 w-4" />
+          <span className="sr-only">复制优化后的文本</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Textarea
