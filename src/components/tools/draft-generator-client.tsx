@@ -19,8 +19,8 @@ export default function DraftGeneratorClient() {
   const handleGenerateDraft = async () => {
     if (!outline.trim() || !styleExamples.trim()) {
       toast({
-        title: "Input Required",
-        description: "Please provide both an outline and style examples.",
+        title: "请输入必填项",
+        description: "请同时提供大纲和风格示例。",
         variant: "destructive",
       });
       return;
@@ -33,14 +33,14 @@ export default function DraftGeneratorClient() {
       const result = await generateDraft(input);
       setGeneratedDraft(result.draft);
       toast({
-        title: "Success!",
-        description: "Draft generated successfully.",
+        title: "成功！",
+        description: "草稿已成功生成。",
       });
     } catch (error) {
       console.error("Error generating draft:", error);
       toast({
-        title: "Error",
-        description: "Failed to generate draft. Please try again.",
+        title: "错误",
+        description: "生成草稿失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -52,25 +52,25 @@ export default function DraftGeneratorClient() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Draft Inputs</CardTitle>
-          <CardDescription>Provide an outline and style examples to generate a draft.</CardDescription>
+          <CardTitle>草稿输入</CardTitle>
+          <CardDescription>提供大纲和风格示例以生成草稿。</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="outline">Outline</Label>
+            <Label htmlFor="outline">大纲</Label>
             <Textarea
               id="outline"
-              placeholder="Enter the outline for your draft..."
+              placeholder="输入您草稿的大纲..."
               value={outline}
               onChange={(e) => setOutline(e.target.value)}
               className="min-h-[150px] resize-none text-sm"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="styleExamples">Style Examples</Label>
+            <Label htmlFor="styleExamples">风格示例</Label>
             <Textarea
               id="styleExamples"
-              placeholder="Provide examples of the desired writing style..."
+              placeholder="提供所需写作风格的示例..."
               value={styleExamples}
               onChange={(e) => setStyleExamples(e.target.value)}
               className="min-h-[150px] resize-none text-sm"
@@ -78,19 +78,19 @@ export default function DraftGeneratorClient() {
           </div>
           <Button onClick={handleGenerateDraft} disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="animate-spin" /> : <Edit3 />}
-            <span>{isLoading ? "Generating..." : "Generate Draft"}</span>
+            <span>{isLoading ? "生成中..." : "生成草稿"}</span>
           </Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Generated Draft</CardTitle>
-          <CardDescription>The AI-powered generated draft will appear here.</CardDescription>
+          <CardTitle>生成的草稿</CardTitle>
+          <CardDescription>AI 生成的草稿将显示在此处。</CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="Generated draft..."
+            placeholder="生成的草稿..."
             value={generatedDraft}
             readOnly
             className="min-h-[250px] resize-none bg-muted/50 text-sm"

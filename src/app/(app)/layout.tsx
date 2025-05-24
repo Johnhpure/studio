@@ -7,11 +7,11 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 
 const pageTitles: { [key: string]: string } = {
-  "/distiller": "Source Text Distiller",
-  "/draft-generator": "AI-Powered Draft Generation",
-  "/signature-analyzer": "AI Writing Signature Analyzer",
-  "/refinement": "AI-Assisted Refinement",
-  "/settings": "AI Configuration",
+  "/distiller": "源文本提取器",
+  "/draft-generator": "AI 草稿生成",
+  "/signature-analyzer": "AI 写作特征分析器",
+  "/refinement": "AI 辅助优化",
+  "/settings": "AI 配置",
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

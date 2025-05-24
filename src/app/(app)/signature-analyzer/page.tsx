@@ -2,8 +2,8 @@ import SignatureAnalyzerClient from "@/components/tools/signature-analyzer-clien
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'AI Signature Analyzer | 敬若涵的搞钱神器！',
-  description: 'Analyzes draft copy for AI-like patterns and suggests edits.',
+  title: 'AI 写作特征分析器 | 敬若涵的搞钱神器！',
+  description: '分析草稿中的 AI 式模式并建议编辑。',
 };
 
 export default function SignatureAnalyzerPage() {

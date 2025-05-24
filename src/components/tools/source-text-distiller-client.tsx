@@ -18,8 +18,8 @@ export default function SourceTextDistillerClient() {
   const handleDistill = async () => {
     if (!sourceText.trim()) {
       toast({
-        title: "Input Required",
-        description: "Please enter some source text to distill.",
+        title: "请输入必填项",
+        description: "请输入要提取的源文本。",
         variant: "destructive",
       });
       return;
@@ -32,14 +32,14 @@ export default function SourceTextDistillerClient() {
       const result = await distillSourceText(input);
       setDistilledText(result.summary);
       toast({
-        title: "Success!",
-        description: "Source text distilled successfully.",
+        title: "成功！",
+        description: "源文本已成功提取。",
       });
     } catch (error) {
       console.error("Error distilling source text:", error);
       toast({
-        title: "Error",
-        description: "Failed to distill source text. Please try again.",
+        title: "错误",
+        description: "提取源文本失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -50,12 +50,12 @@ export default function SourceTextDistillerClient() {
   const leftPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
-        <CardTitle>Source Text</CardTitle>
-        <CardDescription>Paste the text you want to distill into key information.</CardDescription>
+        <CardTitle>源文本</CardTitle>
+        <CardDescription>粘贴您想要提取关键信息的文本。</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Textarea
-          placeholder="Enter your source text here..."
+          placeholder="在此处输入您的源文本..."
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
           className="flex-1 resize-none text-sm"
@@ -63,7 +63,7 @@ export default function SourceTextDistillerClient() {
         />
         <Button onClick={handleDistill} disabled={isLoading} className="mt-4 w-full">
           {isLoading ? <Loader2 className="animate-spin" /> : <WandSparkles />}
-          <span>{isLoading ? "Distilling..." : "Distill Key Information"}</span>
+          <span>{isLoading ? "提取中..." : "提取关键信息"}</span>
         </Button>
       </CardContent>
     </Card>
@@ -72,12 +72,12 @@ export default function SourceTextDistillerClient() {
   const rightPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
-        <CardTitle>Distilled Information</CardTitle>
-        <CardDescription>Key insights extracted from your source text.</CardDescription>
+        <CardTitle>提取的信息</CardTitle>
+        <CardDescription>从您的源文本中提取的关键见解。</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Textarea
-          placeholder="Distilled information will appear here..."
+          placeholder="提取的信息将显示在此处..."
           value={distilledText}
           readOnly
           className="flex-1 resize-none bg-muted/50 text-sm"

@@ -2,8 +2,8 @@ import SourceTextDistillerClient from "@/components/tools/source-text-distiller-
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Source Text Distiller | 敬若涵的搞钱神器！',
-  description: 'Analyzes pasted source text to distill key information.',
+  title: '源文本提取器 | 敬若涵的搞钱神器！',
+  description: '分析粘贴的源文本以提取关键信息。',
 };
 
 export default function DistillerPage() {

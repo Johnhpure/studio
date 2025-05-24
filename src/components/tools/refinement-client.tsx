@@ -20,8 +20,8 @@ export default function RefinementClient() {
   const handleRefine = async () => {
     if (!draftText.trim()) {
       toast({
-        title: "Input Required",
-        description: "Please enter some draft text to refine.",
+        title: "请输入必填项",
+        description: "请输入要优化的草稿文本。",
         variant: "destructive",
       });
       return;
@@ -34,14 +34,14 @@ export default function RefinementClient() {
       const result = await aiAssistedRefinement(input);
       setRefinedText(result.refinedText);
       toast({
-        title: "Success!",
-        description: "Text refined successfully.",
+        title: "成功！",
+        description: "文本已成功优化。",
       });
     } catch (error) {
       console.error("Error refining text:", error);
       toast({
-        title: "Error",
-        description: "Failed to refine text. Please try again.",
+        title: "错误",
+        description: "优化文本失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -52,15 +52,15 @@ export default function RefinementClient() {
   const leftPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
-        <CardTitle>Refinement Inputs</CardTitle>
-        <CardDescription>Provide your draft and optional style traits for AI-assisted refinement.</CardDescription>
+        <CardTitle>优化输入</CardTitle>
+        <CardDescription>提供您的草稿和可选的风格特点以进行 AI 辅助优化。</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4">
         <div className="grid gap-2 flex-1">
-          <Label htmlFor="draftText">Draft Text</Label>
+          <Label htmlFor="draftText">草稿文本</Label>
           <Textarea
             id="draftText"
-            placeholder="Enter the draft text you want to refine..."
+            placeholder="输入您想要优化的草稿文本..."
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             className="flex-1 resize-none text-sm"
@@ -68,10 +68,10 @@ export default function RefinementClient() {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="styleTraits">Style Traits (Optional)</Label>
+          <Label htmlFor="styleTraits">风格特点 (可选)</Label>
           <Textarea
             id="styleTraits"
-            placeholder="Describe desired style traits (e.g., 'formal, concise', 'witty, engaging')..."
+            placeholder="描述所需的风格特点 (例如, '正式, 简洁', '风趣, 引人入胜')..."
             value={styleTraits}
             onChange={(e) => setStyleTraits(e.target.value)}
             className="min-h-[80px] resize-none text-sm"
@@ -79,7 +79,7 @@ export default function RefinementClient() {
         </div>
         <Button onClick={handleRefine} disabled={isLoading} className="w-full">
           {isLoading ? <Loader2 className="animate-spin" /> : <Sparkle />}
-          <span>{isLoading ? "Refining..." : "Refine Text"}</span>
+          <span>{isLoading ? "优化中..." : "优化文本"}</span>
         </Button>
       </CardContent>
     </Card>
@@ -88,12 +88,12 @@ export default function RefinementClient() {
   const rightPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
-        <CardTitle>Refined Text</CardTitle>
-        <CardDescription>Your improved text with enhanced style and reduced AI signature.</CardDescription>
+        <CardTitle>优化后的文本</CardTitle>
+        <CardDescription>改进后的文本，风格增强，AI 特征减少。</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Textarea
-          placeholder="Refined text will appear here..."
+          placeholder="优化后的文本将显示在此处..."
           value={refinedText}
           readOnly
           className="flex-1 resize-none bg-muted/50 text-sm"

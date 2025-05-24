@@ -17,10 +17,10 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Settings, Bot, Filter, FileText, SearchCheck, Sparkles, BrainCircuit } from "lucide-react";
 
 const navItems = [
-  { href: "/distiller", label: "Source Text Distiller", icon: Filter },
-  { href: "/draft-generator", label: "Draft Generation", icon: FileText },
-  { href: "/signature-analyzer", label: "Signature Analyzer", icon: SearchCheck },
-  { href: "/refinement", label: "AI Refinement", icon: Sparkles },
+  { href: "/distiller", label: "源文本提取器", icon: Filter },
+  { href: "/draft-generator", label: "草稿生成", icon: FileText },
+  { href: "/signature-analyzer", label: "特征分析器", icon: SearchCheck },
+  { href: "/refinement", label: "AI 优化", icon: Sparkles },
 ];
 
 export function AppSidebar() {
@@ -62,11 +62,11 @@ export function AppSidebar() {
                 <SidebarMenuButton
                     asChild
                     isActive={pathname === "/settings"}
-                    tooltip={{ children: "Settings", side: "right", align: "center" }}
+                    tooltip={{ children: "设置", side: "right", align: "center" }}
                 >
                     <Link href="/settings">
                         <Settings />
-                        <span>Settings</span>
+                        <span>设置</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

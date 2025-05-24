@@ -9,7 +9,7 @@ const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: '敬若涵的搞钱神器！',
-  description: 'AI-Powered Content Creation and Refinement Tools',
+  description: 'AI 驱动的内容创作与优化工具',
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         {children}
         <Toaster />

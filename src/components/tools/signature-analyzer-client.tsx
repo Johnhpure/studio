@@ -19,8 +19,8 @@ export default function SignatureAnalyzerClient() {
   const handleAnalyze = async () => {
     if (!draftCopy.trim()) {
       toast({
-        title: "Input Required",
-        description: "Please enter some draft copy to analyze.",
+        title: "请输入必填项",
+        description: "请输入要分析的草稿内容。",
         variant: "destructive",
       });
       return;
@@ -35,14 +35,14 @@ export default function SignatureAnalyzerClient() {
       setAnalysis(result.analysis);
       setSuggestions(result.suggestions);
       toast({
-        title: "Success!",
-        description: "Draft analyzed successfully.",
+        title: "成功！",
+        description: "草稿已成功分析。",
       });
     } catch (error) {
       console.error("Error analyzing signature:", error);
       toast({
-        title: "Error",
-        description: "Failed to analyze draft. Please try again.",
+        title: "错误",
+        description: "分析草稿失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -54,19 +54,19 @@ export default function SignatureAnalyzerClient() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Analyze Draft Copy</CardTitle>
-          <CardDescription>Paste your draft to check for AI-like patterns and get suggestions.</CardDescription>
+          <CardTitle>分析草稿副本</CardTitle>
+          <CardDescription>粘贴您的草稿以检查 AI 式模式并获取建议。</CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="Enter your draft copy here..."
+            placeholder="在此处输入您的草稿副本..."
             value={draftCopy}
             onChange={(e) => setDraftCopy(e.target.value)}
             className="min-h-[200px] resize-none text-sm"
           />
           <Button onClick={handleAnalyze} disabled={isLoading} className="mt-4 w-full">
             {isLoading ? <Loader2 className="animate-spin" /> : <SearchCode />}
-            <span>{isLoading ? "Analyzing..." : "Analyze Signature"}</span>
+            <span>{isLoading ? "分析中..." : "分析特征"}</span>
           </Button>
         </CardContent>
       </Card>
@@ -74,20 +74,20 @@ export default function SignatureAnalyzerClient() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Analysis</CardTitle>
-            <CardDescription>AI-like patterns found in your draft.</CardDescription>
+            <CardTitle>分析结果</CardTitle>
+            <CardDescription>在您的草稿中找到的 AI 式模式。</CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[200px] rounded-md border p-4 bg-muted/50 text-sm">
-              {analysis || "Analysis will appear here..."}
+              {analysis || "分析结果将显示在此处..."}
             </ScrollArea>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Suggestions</CardTitle>
-            <CardDescription>Recommendations to improve authenticity.</CardDescription>
+            <CardTitle>建议</CardTitle>
+            <CardDescription>提高真实性的建议。</CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[200px] rounded-md border p-4 bg-muted/50 text-sm">
@@ -98,7 +98,7 @@ export default function SignatureAnalyzerClient() {
                   ))}
                 </ul>
               ) : (
-                "Suggestions will appear here..."
+                "建议将显示在此处..."
               )}
             </ScrollArea>
           </CardContent>
