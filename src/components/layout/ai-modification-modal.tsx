@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, WandSparkles, Save } from 'lucide-react';
+import { Loader2, WandSparkles, Save, ChevronUp, ChevronDown } from 'lucide-react'; // Added ChevronUp, ChevronDown
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +40,7 @@ export function AiModificationModal({
   const [currentUserPrompt, setCurrentUserPrompt] = useState('');
   const [refinedContentResult, setRefinedContentResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOriginalContentCollapsed, setIsOriginalContentCollapsed] = useState(false); // New state for collapse
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export function AiModificationModal({
       setRefinedContentResult(null);
       // Optionally reset currentUserPrompt if desired when modal opens
       // setCurrentUserPrompt(""); 
+      // setIsOriginalContentCollapsed(false); // Optionally reset collapse state on open
     }
   }, [isOpen]);
 
@@ -108,13 +110,28 @@ export function AiModificationModal({
         {/* Container for scrollable content areas */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4 py-2">
           {/* Original Content Display */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <Label className="text-sm font-medium mb-1 shrink-0">原始内容 (只读)</Label>
-            <div className="flex-1 rounded-md border bg-muted/30 overflow-y-auto">
-              <div className="p-3 prose dark:prose-invert max-w-none text-xs">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
-              </div>
+          <div className={isOriginalContentCollapsed ? "flex-none" : "flex-1 flex flex-col min-h-0"}>
+            <div className="flex justify-between items-center mb-1 shrink-0">
+              <Label className="text-sm font-medium">原始内容 (只读)</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOriginalContentCollapsed(!isOriginalContentCollapsed)}
+                className="px-2 py-1 h-auto text-xs"
+                aria-expanded={!isOriginalContentCollapsed}
+                aria-controls="original-content-display"
+              >
+                {isOriginalContentCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+                <span className="ml-1">{isOriginalContentCollapsed ? "展开" : "折叠"}</span>
+              </Button>
             </div>
+            {!isOriginalContentCollapsed && (
+              <div id="original-content-display" className="flex-1 rounded-md border bg-muted/30 overflow-y-auto">
+                <div className="p-3 prose dark:prose-invert max-w-none text-xs">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* AI Refined Result Display */}
