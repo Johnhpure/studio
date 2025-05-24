@@ -45,8 +45,6 @@ export function AiModificationModal({
 
   useEffect(() => {
     if (isOpen) {
-      // Reset state when modal opens, except for user prompt if we want to persist it across opens within the same session
-      // setCurrentUserPrompt(''); // Optional: reset prompt on open
       setRefinedContentResult(null);
     }
   }, [isOpen]);
@@ -86,7 +84,7 @@ export function AiModificationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[80vw] lg:max-w-[70vw] xl:max-w-[60vw] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[80vw] lg:max-w-[70vw] xl:max-w-[60vw] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>
@@ -94,7 +92,7 @@ export function AiModificationModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Top: User Prompt Input */}
+        {/* User Prompt Input */}
         <div className="py-2 shrink-0">
           <Label htmlFor="ai-mod-user-prompt" className="text-sm font-medium">您的修改指令 (提示词)</Label>
           <Textarea
@@ -106,36 +104,39 @@ export function AiModificationModal({
           />
         </div>
 
-        {/* Middle: Original Content Display */}
-        <div className="py-2 flex-1 flex flex-col min-h-0"> {/* Key change: min-h-0 */}
-          <Label className="text-sm font-medium mb-1 shrink-0">原始内容 (只读)</Label>
-          <ScrollArea className="flex-1 rounded-md border bg-muted/30"> {/* Key change: flex-1 */}
-            <div className="p-3 prose dark:prose-invert max-w-none text-xs">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
-            </div>
-          </ScrollArea>
-        </div>
+        {/* Container for scrollable content areas */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4 py-2">
+          {/* Original Content Display */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <Label className="text-sm font-medium mb-1 shrink-0">原始内容 (只读)</Label>
+            <ScrollArea className="flex-1 rounded-md border bg-muted/30">
+              <div className="p-3 prose dark:prose-invert max-w-none text-xs">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
+              </div>
+            </ScrollArea>
+          </div>
 
-        {/* Bottom: AI Refined Result Display */}
-        <div className="py-2 flex-1 flex flex-col min-h-0"> {/* Key change: min-h-0 */}
-          <Label className="text-sm font-medium mb-1 shrink-0">AI优化结果 (只读)</Label>
-          <ScrollArea className="flex-1 rounded-md border bg-muted/50"> {/* Key change: flex-1 */}
-             <div className="p-3 prose dark:prose-invert max-w-none text-xs">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" /> 
-                    <p className="ml-2 text-muted-foreground">AI思考中...</p>
-                  </div>
-                ) : refinedContentResult !== null ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{refinedContentResult}</ReactMarkdown>
-                ) : (
-                  <p className="text-muted-foreground">AI优化后的内容将显示在此处...</p>
-                )}
-            </div>
-          </ScrollArea>
+          {/* AI Refined Result Display */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <Label className="text-sm font-medium mb-1 shrink-0">AI优化结果 (只读)</Label>
+            <ScrollArea className="flex-1 rounded-md border bg-muted/50">
+               <div className="p-3 prose dark:prose-invert max-w-none text-xs">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" /> 
+                      <p className="ml-2 text-muted-foreground">AI思考中...</p>
+                    </div>
+                  ) : refinedContentResult !== null ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{refinedContentResult}</ReactMarkdown>
+                  ) : (
+                    <p className="text-muted-foreground">AI优化后的内容将显示在此处...</p>
+                  )}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
         
-        <DialogFooter className="mt-4 flex-col sm:flex-row sm:justify-between shrink-0">
+        <DialogFooter className="shrink-0 flex-col sm:flex-row sm:justify-between mt-auto pt-4">
           <Button type="button" onClick={handleApplyAi} disabled={isLoading || !currentUserPrompt.trim()}>
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <WandSparkles className="mr-2 h-4 w-4" />}
             {isLoading ? "处理中..." : "应用AI修改"}
