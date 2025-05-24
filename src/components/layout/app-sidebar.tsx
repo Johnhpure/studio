@@ -55,8 +55,13 @@ export function AppSidebar() {
   let displayedLabel = progressLabels[0]; // Default
 
   if (currentStepIndex !== -1) {
+    // Calculate progress based on the *start* of the current step being completed.
+    // So, after step 1 (index 0) is done, 1/7th of progress.
     progressPercent = ((currentStepIndex + 1) / navItems.length) * 100;
     displayedLabel = progressLabels[currentStepIndex + 1];
+  } else if (pathname === "/settings") {
+    progressPercent = 0; // Settings page is 0%
+    displayedLabel = progressLabels[0];
   }
 
 
@@ -104,15 +109,15 @@ export function AppSidebar() {
               {displayedLabel}
             </p>
             <div 
-              className="relative h-32 w-2.5 bg-sidebar-foreground/20 rounded-full overflow-hidden" // Track
+              className="relative h-32 w-3.5 bg-sidebar-foreground/10 rounded-full overflow-hidden" // Track: wider, more transparent
               role="progressbar"
               aria-valuenow={progressPercent}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="搞钱进度" // Updated aria-label
+              aria-label="搞钱进度" 
             > 
               <div
-                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-all duration-500 ease-out" // Fill with animation
+                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-[height] duration-700 ease-in-out" // Fill: specific, slower animation
                 style={{ height: `${progressPercent}%` }}
               />
             </div>
