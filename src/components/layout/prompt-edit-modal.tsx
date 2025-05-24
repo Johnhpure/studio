@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'; // Explicitly list all used dialog components
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -37,8 +37,6 @@ export function PromptEditModal({
   const [editablePrompt, setEditablePrompt] = useState(currentEditedPromptTemplate || defaultPromptTemplate);
 
   useEffect(() => {
-    // Update editable prompt if the currentEditedPromptTemplate prop changes
-    // or if the default template changes when the modal is opened/re-opened
     setEditablePrompt(currentEditedPromptTemplate || defaultPromptTemplate);
   }, [currentEditedPromptTemplate, defaultPromptTemplate, isOpen]);
 
@@ -51,13 +49,13 @@ export function PromptEditModal({
     setEditablePrompt(defaultPromptTemplate);
   };
 
-  if (!isOpen) { 
+  if (!isOpen) {
     return null;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[60vw] max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-[70vw] lg:max-w-[60vw] max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>编辑“{stepTitle}”的AI提示词模板</DialogTitle>
           <DialogDescription>
@@ -65,27 +63,25 @@ export function PromptEditModal({
             提示词使用Handlebars模板语法，例如 `{"{{variableName}}"}`。
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4 flex-1 min-h-0">
-          <div className="grid gap-2 flex-1 min-h-0">
-            <Label htmlFor="prompt-template-editor" className="sr-only">
-              提示词模板
-            </Label>
-            <ScrollArea className="h-[calc(70vh-200px)] w-full rounded-md border">
-                 <Textarea
-                    id="prompt-template-editor"
-                    value={editablePrompt}
-                    onChange={(e) => setEditablePrompt(e.target.value)}
-                    className="min-h-full h-auto resize-none text-xs !border-0 !ring-0 !outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0"
-                    placeholder="输入或编辑提示词模板..."
-                />
-            </ScrollArea>
-          </div>
+        <div className="flex flex-col flex-grow py-4 overflow-hidden"> {/* Changed: Use flex-grow for vertical expansion */}
+          <Label htmlFor="prompt-template-editor" className="mb-2 text-sm font-medium">
+            提示词模板 (Handlebars 语法)
+          </Label>
+          <ScrollArea className="flex-grow rounded-md border"> {/* Changed: Use flex-grow */}
+            <Textarea
+              id="prompt-template-editor"
+              value={editablePrompt}
+              onChange={(e) => setEditablePrompt(e.target.value)}
+              className="min-h-[300px] h-full w-full resize-none text-xs !border-0 !ring-0 !outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 p-2.5" // Changed: Ensured h-full, adjusted padding
+              placeholder="输入或编辑提示词模板..."
+            />
+          </ScrollArea>
         </div>
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between">
+        <DialogFooter className="flex-col sm:flex-row sm:justify-between pt-4"> {/* Added pt-4 for spacing */}
           <Button type="button" variant="outline" onClick={handleResetToDefault}>
             恢复默认
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-2 sm:mt-0">
             <DialogClose asChild>
               <Button type="button" variant="secondary">
                 取消
