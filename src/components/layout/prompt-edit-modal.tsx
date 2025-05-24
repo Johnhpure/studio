@@ -37,7 +37,9 @@ export function PromptEditModal({
   const [editablePrompt, setEditablePrompt] = useState(currentEditedPromptTemplate || defaultPromptTemplate);
 
   useEffect(() => {
-    setEditablePrompt(currentEditedPromptTemplate || defaultPromptTemplate);
+    if (isOpen) {
+      setEditablePrompt(currentEditedPromptTemplate || defaultPromptTemplate);
+    }
   }, [currentEditedPromptTemplate, defaultPromptTemplate, isOpen]);
 
   const handleSave = () => {
@@ -55,7 +57,7 @@ export function PromptEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[80vw] lg:max-w-[70vw] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[75vw] lg:max-w-[65vw] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>编辑“{stepTitle}”的AI提示词模板</DialogTitle>
           <DialogDescription>
@@ -63,21 +65,21 @@ export function PromptEditModal({
             提示词使用Handlebars模板语法，例如 `{"{{variableName}}"}`。
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col flex-grow py-4 overflow-hidden"> {/* Changed: Use flex-grow for vertical expansion */}
-          <Label htmlFor="prompt-template-editor" className="mb-2 text-sm font-medium">
+        <div className="flex flex-col flex-grow py-4 overflow-hidden">
+          <Label htmlFor="prompt-template-editor-modal" className="mb-2 text-sm font-medium">
             提示词模板 (Handlebars 语法)
           </Label>
-          <ScrollArea className="flex-grow rounded-md border"> {/* Changed: Use flex-grow */}
+          <ScrollArea className="flex-grow rounded-md border">
             <Textarea
-              id="prompt-template-editor"
+              id="prompt-template-editor-modal"
               value={editablePrompt}
               onChange={(e) => setEditablePrompt(e.target.value)}
-              className="min-h-[300px] h-full w-full resize-none text-xs !border-0 !ring-0 !outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 p-2.5" // Changed: Ensured h-full, adjusted padding
+              className="min-h-[60vh] h-full w-full resize-none text-xs !border-0 !ring-0 !outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 p-2.5"
               placeholder="输入或编辑提示词模板..."
             />
           </ScrollArea>
         </div>
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between pt-4"> {/* Added pt-4 for spacing */}
+        <DialogFooter className="flex-col sm:flex-row sm:justify-between pt-4">
           <Button type="button" variant="outline" onClick={handleResetToDefault}>
             恢复默认
           </Button>
@@ -96,4 +98,3 @@ export function PromptEditModal({
     </Dialog>
   );
 }
-
