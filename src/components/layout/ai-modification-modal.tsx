@@ -15,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-// import { ScrollArea } from '@/components/ui/scroll-area'; // No longer needed
 import { Loader2, WandSparkles, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -111,7 +110,6 @@ export function AiModificationModal({
           {/* Original Content Display */}
           <div className="flex-1 flex flex-col min-h-0">
             <Label className="text-sm font-medium mb-1 shrink-0">原始内容 (只读)</Label>
-            {/* Replaced ScrollArea with a div + overflow-y-auto */}
             <div className="flex-1 rounded-md border bg-muted/30 overflow-y-auto">
               <div className="p-3 prose dark:prose-invert max-w-none text-xs">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
@@ -122,7 +120,6 @@ export function AiModificationModal({
           {/* AI Refined Result Display */}
           <div className="flex-1 flex flex-col min-h-0">
             <Label className="text-sm font-medium mb-1 shrink-0">AI优化结果 (只读)</Label>
-            {/* Replaced ScrollArea with a div + overflow-y-auto */}
             <div className="flex-1 rounded-md border bg-muted/50 overflow-y-auto">
                <div className="p-3 prose dark:prose-invert max-w-none text-xs">
                   {isLoading ? (
