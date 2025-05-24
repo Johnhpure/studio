@@ -10,6 +10,7 @@ interface TemporaryPromptsContextType {
   setTemporaryPrompt: (stepKey: PromptStepKey, prompt: string) => void;
   getTemporaryPrompt: (stepKey: PromptStepKey) => string | undefined;
   clearTemporaryPrompt: (stepKey: PromptStepKey) => void;
+  clearAllTemporaryPrompts: () => void; // New function
 }
 
 const TemporaryPromptsContext = createContext<TemporaryPromptsContextType | undefined>(undefined);
@@ -33,8 +34,12 @@ export const TemporaryPromptsProvider = ({ children }: { children: ReactNode }) 
     });
   }, []);
 
+  const clearAllTemporaryPrompts = useCallback(() => { // Implementation of new function
+    setTemporaryPrompts({} as Record<PromptStepKey, string | undefined>);
+  }, []);
+
   return (
-    <TemporaryPromptsContext.Provider value={{ temporaryPrompts, setTemporaryPrompt, getTemporaryPrompt, clearTemporaryPrompt }}>
+    <TemporaryPromptsContext.Provider value={{ temporaryPrompts, setTemporaryPrompt, getTemporaryPrompt, clearTemporaryPrompt, clearAllTemporaryPrompts }}>
       {children}
     </TemporaryPromptsContext.Provider>
   );
