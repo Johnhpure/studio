@@ -132,7 +132,7 @@ export function AppSidebar() {
               {displayedLabel}
             </p>
             <div
-              className="relative h-32 w-3.5 bg-sidebar-foreground/10 rounded-full overflow-hidden" // Track: wider, more transparent
+              className="relative h-40 w-4 bg-sidebar-foreground/10 rounded-full overflow-hidden" 
               role="progressbar"
               aria-valuenow={progressPercent}
               aria-valuemin={0}
@@ -140,7 +140,7 @@ export function AppSidebar() {
               aria-label="搞钱进度"
             >
               <div
-                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-[height] duration-700 ease-in-out" // Fill: specific, slower animation
+                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-[height] duration-700 ease-in-out"
                 style={{ height: `${progressPercent}%` }}
               />
             </div>
