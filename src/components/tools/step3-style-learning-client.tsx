@@ -13,7 +13,7 @@ import { Loader2, ArrowRight, Wand2, BrainCircuit } from "lucide-react"; // Chan
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { learnUserStyle, type LearnUserStyleInput } from "@/ai/flows/style-learning-flow"; // Ensure correct flow name
 
-const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manuscriptSample";
+const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manusCRIPT_SAMPLE"; // Corrected potential typo in key
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 
 export default function Step3StyleLearningClient() {
