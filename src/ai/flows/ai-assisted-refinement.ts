@@ -1,9 +1,11 @@
+
 'use server';
 
 /**
  * @fileOverview This file implements the AI-Assisted Refinement flow.
  *
- * It improves written drafts with learned style traits and removes detectable AI signatures.
+ * It improves written drafts based on provided guidance (which can include learned style traits, 
+ * AI analysis suggestions, and user instructions) and removes detectable AI signatures.
  * - aiAssistedRefinement - The function to call for refining text.
  * - AiAssistedRefinementInput - The input type for the aiAssistedRefinement function.
  * - AiAssistedRefinementOutput - The output type for the aiAssistedRefinement function.
@@ -16,16 +18,16 @@ const AiAssistedRefinementInputSchema = z.object({
   draftText: z
     .string()
     .describe('The draft text to be refined.'),
-  styleTraits: z
+  guidance: z
     .string()
     .optional()
-    .describe('Optional style traits to incorporate into the refined text.'),
+    .describe('Comprehensive guidance for refinement. This can include AI-generated suggestions from Step 5, learned user writing style traits from Step 3, and/or specific user-provided fine-tuning instructions for the current refinement step. If provided, the AI should strictly follow these instructions.'),
 });
 
 export type AiAssistedRefinementInput = z.infer<typeof AiAssistedRefinementInputSchema>;
 
 const AiAssistedRefinementOutputSchema = z.object({
-  refinedText: z.string().describe('The refined text with improved style and reduced AI signature.'),
+  refinedText: z.string().describe('The refined text with improved style, reduced AI signature, and incorporating the provided guidance.'),
 });
 
 export type AiAssistedRefinementOutput = z.infer<typeof AiAssistedRefinementOutputSchema>;
@@ -38,15 +40,18 @@ const prompt = ai.definePrompt({
   name: 'aiAssistedRefinementPrompt',
   input: {schema: AiAssistedRefinementInputSchema},
   output: {schema: AiAssistedRefinementOutputSchema},
-  prompt: `You are an AI writing assistant specializing in refining text and removing AI signatures.
+  prompt: `You are an expert AI writing assistant. Your task is to refine the provided "Draft Text".
+The primary goals are to eliminate any AI-like writing patterns, make the text sound natural and authentic, while strictly adhering to the "Provided Guidance".
+The refined text must preserve the core facts, data, and intent of the original "Draft Text".
 
-  Your goal is to improve the provided draft text, incorporating the specified style traits (if any), and ensuring that the final output sounds natural and authentic.
+Draft Text:
+{{{draftText}}}
 
-  Draft Text: {{{draftText}}}
+Provided Guidance (Follow these instructions carefully for refinement):
+{{{guidance}}}
 
-  Style Traits: {{{styleTraits}}}
-
-  Refined Text (with improved style and reduced AI signature):`,
+Based on the "Draft Text" and "Provided Guidance", produce the "Refined Text".
+Refined Text:`,
 });
 
 const aiAssistedRefinementFlow = ai.defineFlow(

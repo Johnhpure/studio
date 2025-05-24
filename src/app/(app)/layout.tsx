@@ -11,13 +11,14 @@ const pageTitles: { [key: string]: string } = {
   "/step1-requirements": "步骤一：输入甲方核心需求",
   "/step2-outline-generator": "步骤二：AI生成稿件创作大纲",
   // "/step3-style-learning": "步骤三：个性化风格学习",
-  "/draft-generator": "AI 草稿生成 (步骤四)", // Will be Step 4, placeholder name for now
+  "/draft-generator": "AI 草稿生成 (旧)", // Placeholder name, will be Step 4
   "/step5-ai-analysis": "步骤五：AI特征检测与分析",
-  // "/signature-analyzer": "AI 写作特征分析器 (步骤五)", // Old route
-  "/refinement": "AI 辅助优化 (步骤六)", // Will be Step 6
+  "/step6-ai-elimination": "步骤六：AI智能消除AI特征", // Updated for Step 6
   // "/step7-final-edit": "步骤七：专业人工最终定稿",
   "/settings": "AI模型配置",
   "/distiller": "步骤一：输入甲方核心需求", // Fallback for old route
+  "/signature-analyzer": "步骤五：AI特征检测与分析", // Fallback for old route
+  "/refinement": "步骤六：AI智能消除AI特征", // Fallback for old route
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
