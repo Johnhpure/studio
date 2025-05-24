@@ -15,13 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward, FilePenLine, WandSparkles } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
-import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow"; // Import new flow
+import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; 
-import { AiModificationModal } from "@/components/layout/ai-modification-modal"; // Import new modal
+import { AiModificationModal } from "@/components/layout/ai-modification-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext"; 
-import { STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+import { STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_USER_INSTRUCTIONS = "step2_userInstructions";
@@ -58,7 +58,7 @@ export default function Step2OutlineGeneratorClient() {
 
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isAiModificationModalOpen, setIsAiModificationModalOpen] = useState(false);
-
+  const [editedOutlineCharCount, setEditedOutlineCharCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -89,6 +89,10 @@ export default function Step2OutlineGeneratorClient() {
   useEffect(() => {
     saveToLocalStorage();
   }, [saveToLocalStorage]);
+
+  useEffect(() => {
+    setEditedOutlineCharCount(editedOutline.length);
+  }, [editedOutline]);
 
   const handleGenerateOutline = async () => {
     if (!clientRequirements.trim()) {
@@ -195,7 +199,6 @@ export default function Step2OutlineGeneratorClient() {
 
   const handleSaveRefinedOutline = (refinedOutline: string) => {
     setEditedOutline(refinedOutline);
-    // LocalStorage will be updated by the useEffect for editedOutline
   };
 
   const leftPane = (
@@ -305,12 +308,13 @@ export default function Step2OutlineGeneratorClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div className="flex-1">
             <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />AI生成的稿件大纲</CardTitle>
             <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以编辑或预览。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {editedOutlineCharCount} 字</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
             <Button
                 variant="outline"
                 size="sm"
@@ -375,7 +379,7 @@ export default function Step2OutlineGeneratorClient() {
       <PromptEditModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE}
+        defaultPromptTemplate={getDefaultPromptTemplate(PROMPT_KEY_STEP2)}
         currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP2)}
         onSave={handleSaveTemporaryPrompt}
         stepTitle="步骤二：AI生成稿件大纲"

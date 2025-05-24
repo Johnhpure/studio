@@ -17,11 +17,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+import { STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
 const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // This will store the full analysis report
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions";
 const PROMPT_KEY_STEP5: "step5_aiAnalysis" = "step5_aiAnalysis";
 
 
@@ -34,6 +34,7 @@ export default function Step5AiAnalysisClient() {
   const { toast } = useToast();
   const { getTemporaryPrompt, setTemporaryPrompt } = useTemporaryPrompts();
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [analysisReportCharCount, setAnalysisReportCharCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -54,6 +55,10 @@ export default function Step5AiAnalysisClient() {
       localStorage.setItem(LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY, draftCopy);
     }
   }, [draftCopy]);
+
+  useEffect(() => {
+    setAnalysisReportCharCount(analysisReport.length);
+  }, [analysisReport]);
 
   const handleAnalyze = async () => {
     if (!draftCopy.trim()) {
@@ -113,9 +118,9 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy); 
-    if (analysisReport.trim()) { // Ensure report is saved if generated
+    if (analysisReport.trim()) { 
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport); 
-    } else { // If no report generated yet, clear any old one
+    } else { 
         localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS);
     }
     toast({ title: "准备就绪", description: "正在前往AI特征消除步骤..." });
@@ -186,7 +191,7 @@ export default function Step5AiAnalysisClient() {
       <PromptEditModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE}
+        defaultPromptTemplate={getDefaultPromptTemplate(PROMPT_KEY_STEP5)}
         currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP5)}
         onSave={handleSaveTemporaryPrompt}
         stepTitle="步骤五：AI特征检测与分析"
@@ -197,12 +202,13 @@ export default function Step5AiAnalysisClient() {
   const rightPane = (
     <div className="flex-1 flex flex-col gap-4">
       <Card className="flex-grow flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div className="flex-1">
             <CardTitle>AI特征诊断与优化指南</CardTitle>
             <CardDescription>AI对稿件的深度分析报告 (Markdown 预览)。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {analysisReportCharCount} 字</p>
           </div>
-          <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading} title="复制原始Markdown报告">
+          <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading} title="复制原始Markdown报告" className="flex-shrink-0">
             <Copy className="h-4 w-4" />
              <span className="sr-only">复制分析报告</span>
           </Button>

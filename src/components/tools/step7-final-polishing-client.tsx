@@ -24,6 +24,7 @@ export default function Step7FinalPolishingClient() {
   const [isPreviewingFinalDraft, setIsPreviewingFinalDraft] = useState(false);
   const [clientRequirements, setClientRequirements] = useState("");
   const [creativeOutline, setCreativeOutline] = useState("");
+  const [finalDraftCharCount, setFinalDraftCharCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -32,6 +33,10 @@ export default function Step7FinalPolishingClient() {
       setCreativeOutline(localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE) || "无创作大纲信息。");
     }
   }, []);
+
+  useEffect(() => {
+    setFinalDraftCharCount(finalDraft.length);
+  }, [finalDraft]);
 
   const handleDraftChange = (newDraft: string) => {
     setFinalDraft(newDraft);
@@ -112,12 +117,13 @@ export default function Step7FinalPolishingClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div className="flex-1">
             <CardTitle>最终稿件编辑区</CardTitle>
             <CardDescription>请在此处进行最终的修改、润色和校对。可切换编辑/预览模式。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {finalDraftCharCount} 字</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"

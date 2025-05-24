@@ -16,7 +16,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_3_STYLE_LEARNING_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+import { STEP_3_STYLE_LEARNING_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manuscriptSample";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
@@ -32,6 +32,7 @@ export default function Step3StyleLearningClient() {
   const [styleAnalysisReport, setStyleAnalysisReport] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [reportCharCount, setReportCharCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -46,13 +47,16 @@ export default function Step3StyleLearningClient() {
   const saveToLocalStorage = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE, manuscriptSample);
-      // Style report is saved upon successful AI generation
     }
   }, [manuscriptSample]);
 
   useEffect(() => {
     saveToLocalStorage();
   }, [saveToLocalStorage]);
+
+  useEffect(() => {
+    setReportCharCount(styleAnalysisReport.length);
+  }, [styleAnalysisReport]);
 
   const handleAnalyzeStyle = async () => {
     if (!manuscriptSample.trim()) {
@@ -86,7 +90,6 @@ export default function Step3StyleLearningClient() {
       toast({ title: "未生成风格报告", description: "请先让AI分析您的写作风格。", variant: "destructive" });
       return;
     }
-    // Ensure report is saved before navigating
     if (typeof window !== 'undefined' && styleAnalysisReport) {
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT, styleAnalysisReport);
     }
@@ -162,7 +165,7 @@ export default function Step3StyleLearningClient() {
        <PromptEditModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_3_STYLE_LEARNING_PROMPT_TEMPLATE}
+        defaultPromptTemplate={getDefaultPromptTemplate(PROMPT_KEY_STEP3)}
         currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP3)}
         onSave={handleSaveTemporaryPrompt}
         stepTitle="步骤三：AI学习您的写作风格"
@@ -172,12 +175,13 @@ export default function Step3StyleLearningClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div className="flex-1">
             <CardTitle>AI生成的风格分析报告</CardTitle>
             <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告 (Markdown 预览)。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {reportCharCount} 字</p>
         </div>
-        <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading} title="复制原始Markdown报告">
+        <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading} title="复制原始Markdown报告" className="flex-shrink-0">
             <Copy className="h-4 w-4" />
             <span className="sr-only">复制报告</span>
         </Button>

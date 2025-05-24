@@ -12,13 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy, Eye, Edit3, FilePenLine, WandSparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
-import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow"; // Import new flow
+import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
-import { AiModificationModal } from "@/components/layout/ai-modification-modal"; // Import new modal
+import { AiModificationModal } from "@/components/layout/ai-modification-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+import { STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
@@ -56,6 +56,7 @@ export default function Step4DraftCreationClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isAiModificationModalOpen, setIsAiModificationModalOpen] = useState(false);
+  const [generatedDraftCharCount, setGeneratedDraftCharCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -100,6 +101,10 @@ export default function Step4DraftCreationClient() {
     saveTempInstructions();
   }, [saveTempInstructions]);
 
+  useEffect(() => {
+    setGeneratedDraftCharCount(generatedDraft.length);
+  }, [generatedDraft]);
+
   const handleGeneratedDraftChange = (newDraft: string) => {
     setGeneratedDraft(newDraft);
     if (typeof window !== 'undefined') {
@@ -133,7 +138,6 @@ export default function Step4DraftCreationClient() {
         overridePromptTemplate: temporaryPrompt,
       };
       const result = await generateDraft(input);
-      // setGeneratedDraft(result.generatedDraft); // Will be handled by handleGeneratedDraftChange
       handleGeneratedDraftChange(result.generatedDraft);
 
       toast({ title: "成功", description: "稿件初稿已生成！您可以进行编辑或进入下一步。" });
@@ -150,7 +154,6 @@ export default function Step4DraftCreationClient() {
       toast({ title: "稿件内容为空", description: "请先生成或编辑稿件内容，再进入下一步。", variant: "destructive"});
       return;
     }
-    // generatedDraft is already saved to localStorage by handleGeneratedDraftChange
     router.push(path);
   };
 
@@ -184,7 +187,7 @@ export default function Step4DraftCreationClient() {
   };
 
   const handleSaveRefinedDraft = (refinedDraftContent: string) => {
-    handleGeneratedDraftChange(refinedDraftContent); // This updates state and localStorage
+    handleGeneratedDraftChange(refinedDraftContent); 
   };
 
   const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
@@ -266,12 +269,13 @@ export default function Step4DraftCreationClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div className="flex-1">
             <CardTitle className="text-lg">AI生成的稿件初稿</CardTitle>
             <CardDescription>AI根据您的所有输入创作的初稿。可切换编辑/预览模式。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {generatedDraftCharCount} 字</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
             <Button
                 variant="outline"
                 size="sm"
@@ -334,7 +338,7 @@ export default function Step4DraftCreationClient() {
       <PromptEditModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE}
+        defaultPromptTemplate={getDefaultPromptTemplate(PROMPT_KEY_STEP4)}
         currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP4)}
         onSave={handleSaveTemporaryPrompt}
         stepTitle="步骤四：AI智能创作初稿"

@@ -16,7 +16,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import { STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+import { STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE, getDefaultPromptTemplate } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
 const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
@@ -56,6 +56,7 @@ export default function Step6AiEliminationClient() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [refinedDraftCharCount, setRefinedDraftCharCount] = useState(0);
 
 
   useEffect(() => {
@@ -87,7 +88,6 @@ export default function Step6AiEliminationClient() {
   const saveUIDataToLocalStorage = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_STEP6_EXTRA_INSTRUCTIONS, extraInstructions);
-      // refinedDraft is saved by its handler or on proceed
     }
   }, [extraInstructions]);
 
@@ -95,11 +95,14 @@ export default function Step6AiEliminationClient() {
     saveUIDataToLocalStorage();
   }, [saveUIDataToLocalStorage]);
 
+  useEffect(() => {
+    setRefinedDraftCharCount(refinedDraft.length);
+  }, [refinedDraft]);
+
   const handleRefinedDraftChange = (newDraft: string) => {
     setRefinedDraft(newDraft);
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT, newDraft);
-      // Also update app_currentDraft as this is the latest version now
       localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, newDraft); 
     }
   };
@@ -158,13 +161,12 @@ export default function Step6AiEliminationClient() {
   };
 
   const handleProceedToFinalPolishing = () => {
-    // The latest draft is already in app_currentDraft due to handleRefinedDraftChange
     const draftToPass = refinedDraft.trim() ? refinedDraft : draftToRefine;
      if (!draftToPass.trim()) { 
       toast({ title: "稿件为空", description: "请先生成或输入稿件内容。", variant: "destructive" });
       return;
     }
-    localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftToPass); // Ensure latest is passed
+    localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftToPass);
     toast({ title: "准备就绪", description: "正在前往最终润色步骤..." });
     router.push('/step7-final-polishing'); 
   };
@@ -245,7 +247,7 @@ export default function Step6AiEliminationClient() {
       <PromptEditModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE}
+        defaultPromptTemplate={getDefaultPromptTemplate(PROMPT_KEY_STEP6)}
         currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP6)}
         onSave={handleSaveTemporaryPrompt}
         stepTitle="步骤六：AI智能消除AI特征"
@@ -255,12 +257,13 @@ export default function Step6AiEliminationClient() {
 
   const rightPane = (
      <Card className="flex-1 flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div className="flex-1">
             <CardTitle>优化后稿件</CardTitle>
             <CardDescription>经AI特征消除和优化后的稿件。可切换编辑/预览模式。</CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">字数统计: {refinedDraftCharCount} 字</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
