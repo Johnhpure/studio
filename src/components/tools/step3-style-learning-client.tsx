@@ -36,7 +36,6 @@ export default function Step3StyleLearningClient() {
   const saveToLocalStorage = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE, manuscriptSample);
-      // Only save the report if it's not empty, to avoid overwriting with an empty string on initial load
       if (styleAnalysisReport) {
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT, styleAnalysisReport);
       }
@@ -75,7 +74,6 @@ export default function Step3StyleLearningClient() {
       toast({ title: "未生成风格报告", description: "请先让AI分析您的写作风格。", variant: "destructive" });
       return;
     }
-    // Report is already saved by useEffect or handleAnalyzeStyle
     toast({ title: "风格已确认", description: "正在前往下一步进行初稿创作。" });
     router.push('/step4-draft-creation'); 
   };
@@ -85,7 +83,7 @@ export default function Step3StyleLearningClient() {
       toast({ title: "无内容可复制", description: "风格分析报告为空。", variant: "destructive" });
       return;
     }
-    navigator.clipboard.writeText(styleAnalysisReport) // Copies the raw Markdown
+    navigator.clipboard.writeText(styleAnalysisReport)
       .then(() => {
         toast({ title: "复制成功", description: "风格分析报告 (Markdown) 已复制到剪贴板。" });
       })
@@ -99,17 +97,27 @@ export default function Step3StyleLearningClient() {
     <Card className="flex-1 flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center"><BrainCircuit className="mr-2 h-5 w-5" />输入您的风格范文</CardTitle>
-        <CardDescription>请在此处粘贴一篇能充分代表您个人写作风格和技巧的高质量稿件范例的完整文本内容。</CardDescription>
+        <CardDescription>在此粘贴一篇能代表您个人写作风格的稿件范例。左侧为Markdown输入区，右侧为实时预览区。</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <Label htmlFor="manuscriptSample" className="sr-only">风格范文输入框</Label>
-        <Textarea
-          id="manuscriptSample"
-          placeholder="在此处粘贴您的稿件范例..."
-          value={manuscriptSample}
-          onChange={(e) => setManuscriptSample(e.target.value)}
-          className="flex-1 resize-none text-sm min-h-[300px] max-h-[70vh]"
-        />
+      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
+        <div className="flex-1 flex flex-col md:w-1/2">
+          <Label htmlFor="manuscriptSample" className="mb-1.5">风格范文 (Markdown)</Label>
+          <Textarea
+            id="manuscriptSample"
+            placeholder="在此处粘贴您的稿件范例 (Markdown)..."
+            value={manuscriptSample}
+            onChange={(e) => setManuscriptSample(e.target.value)}
+            className="flex-1 resize-none text-sm min-h-[300px]"
+          />
+        </div>
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label className="mb-1.5">实时预览</Label>
+            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {manuscriptSample || "范文预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
+        </div>
       </CardContent>
       <CardFooter>
         <Button onClick={handleAnalyzeStyle} disabled={isLoading} className="w-full">
@@ -125,7 +133,7 @@ export default function Step3StyleLearningClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle>AI生成的风格分析报告</CardTitle>
-            <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告。</CardDescription>
+            <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告 (Markdown 预览)。</CardDescription>
         </div>
         <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading} title="复制原始Markdown报告">
             <Copy className="h-4 w-4" />

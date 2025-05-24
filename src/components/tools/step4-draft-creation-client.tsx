@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
@@ -76,8 +78,7 @@ export default function Step4DraftCreationClient() {
     saveTempInstructions();
   }, [saveTempInstructions]);
 
-  const handleGeneratedDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newDraft = e.target.value;
+  const handleGeneratedDraftChange = (newDraft: string) => {
     setGeneratedDraft(newDraft);
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, newDraft);
@@ -144,14 +145,18 @@ export default function Step4DraftCreationClient() {
       });
   };
 
-  const ReviewItem = ({ title, content, icon: Icon }: { title: string; content: string; icon?: React.ElementType }) => (
+  const ReviewItem = ({ title, content, icon: Icon, isMarkdown = false }: { title: string; content: string; icon?: React.ElementType; isMarkdown?: boolean }) => (
     <div className="mb-3">
       <Label className="text-sm font-medium flex items-center mb-1">
         {Icon && <Icon className="mr-2 h-4 w-4 text-muted-foreground" />}
         {title}
       </Label>
       <ScrollArea className="min-h-[80px] max-h-[18vh] w-full rounded-md border p-2 bg-muted/30 text-xs">
-        <pre className="whitespace-pre-wrap break-all">{content}</pre>
+        {isMarkdown ? (
+            <ReactMarkdown className="prose dark:prose-invert max-w-none" remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        ) : (
+            <pre className="whitespace-pre-wrap break-all">{content}</pre>
+        )}
       </ScrollArea>
     </div>
   );
@@ -164,8 +169,8 @@ export default function Step4DraftCreationClient() {
           <CardDescription className="text-xs">以下是AI创作本稿件所依据的核心信息。</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto space-y-2 px-4 pt-0 pb-3">
-          <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} />
-          <ReviewItem title="创作大纲 (步骤二)" content={creativeOutline} icon={ListChecks} />
+          <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} isMarkdown />
+          <ReviewItem title="创作大纲 (步骤二)" content={creativeOutline} icon={ListChecks} isMarkdown />
           {outlineMetadata && (
             <div className="text-xs p-2 border rounded-md bg-muted/30 mb-3">
               <p><strong>稿件类型:</strong> {outlineMetadata.manuscriptType}</p>
@@ -173,20 +178,25 @@ export default function Step4DraftCreationClient() {
               <p><strong>期望字数:</strong> {outlineMetadata.wordCount.toString()}</p>
             </div>
           )}
-          <ReviewItem title="写作风格指引 (步骤三)" content={writingStyleGuide} icon={Palette} />
+          <ReviewItem title="写作风格指引 (步骤三)" content={writingStyleGuide} icon={Palette} isMarkdown />
           
           <div>
             <Label htmlFor="tempInstructions" className="text-sm font-medium flex items-center mb-1">
                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                临时微调指令 (可选)
+                临时微调指令 (可选, Markdown)
             </Label>
-            <Textarea
-              id="tempInstructions"
-              placeholder="针对本次初稿生成，输入临时的、额外的指令..."
-              value={tempFineTuneInstructions}
-              onChange={(e) => setTempFineTuneInstructions(e.target.value)}
-              className="text-xs resize-none min-h-[80px] max-h-[18vh] w-full"
-            />
+            <div className="flex flex-col md:flex-row gap-2 min-h-[80px] max-h-[18vh]">
+                <Textarea
+                  id="tempInstructions"
+                  placeholder="针对本次初稿生成，输入临时的、额外的指令 (Markdown)..."
+                  value={tempFineTuneInstructions}
+                  onChange={(e) => setTempFineTuneInstructions(e.target.value)}
+                  className="text-xs resize-none flex-1 md:w-1/2 min-h-[80px]"
+                />
+                <ScrollArea className="rounded-md border p-2 bg-muted/30 text-xs flex-1 md:w-1/2 min-h-[80px] prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{tempFineTuneInstructions || "指令预览..."}</ReactMarkdown>
+                </ScrollArea>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="px-4 pb-4 pt-2">
@@ -204,22 +214,32 @@ export default function Step4DraftCreationClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle className="text-lg">AI生成的稿件初稿</CardTitle>
-            <CardDescription>AI根据您的所有输入创作的初稿。您可在此编辑，然后选择后续操作。</CardDescription>
+            <CardDescription>AI根据您的所有输入创作的初稿。左侧为Markdown编辑区，右侧为实时预览。</CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={handleCopyDraft} disabled={!generatedDraft.trim() || isLoading}>
+        <Button variant="outline" size="icon" onClick={handleCopyDraft} disabled={!generatedDraft.trim() || isLoading} title="复制初稿Markdown">
             <Copy className="h-4 w-4" />
             <span className="sr-only">复制初稿</span>
         </Button>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <Label htmlFor="generatedDraftOutput" className="sr-only">稿件初稿编辑区</Label>
-        <Textarea
-          id="generatedDraftOutput"
-          placeholder="AI生成的稿件初稿将显示在此处..."
-          value={generatedDraft}
-          onChange={handleGeneratedDraftChange}
-          className="flex-1 resize-none text-sm min-h-[300px] max-h-[68vh] bg-muted/20"
-        />
+      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label htmlFor="generatedDraftOutput" className="mb-1.5">稿件初稿编辑区 (Markdown)</Label>
+            <Textarea
+              id="generatedDraftOutput"
+              placeholder="AI生成的稿件初稿将显示在此处..."
+              value={generatedDraft}
+              onChange={(e) => handleGeneratedDraftChange(e.target.value)}
+              className="flex-1 resize-none text-sm min-h-[300px] bg-muted/20"
+            />
+        </div>
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label className="mb-1.5">实时预览区</Label>
+            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/20 min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {generatedDraft || "稿件预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row gap-2 pt-4">
           <Button onClick={() => navigateToNextStep('/step5-ai-analysis')} className="w-full sm:w-auto" disabled={isLoading || !generatedDraft.trim()}>
@@ -238,4 +258,3 @@ export default function Step4DraftCreationClient() {
     </div>
   );
 }
-    

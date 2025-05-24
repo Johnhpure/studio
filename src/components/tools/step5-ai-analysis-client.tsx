@@ -22,7 +22,7 @@ const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions";
 export default function Step5AiAnalysisClient() {
   const router = useRouter();
   const [draftCopy, setDraftCopy] = useState("");
-  const [analysisReport, setAnalysisReport] = useState("");
+  const [analysisReport, setAnalysisReport] = useState(""); // This will store the full Markdown report
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -37,6 +37,7 @@ export default function Step5AiAnalysisClient() {
         setDraftCopy(savedDraftCopy);
       }
 
+      // Load the full analysis report if it exists
       const savedAnalysisReport = localStorage.getItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS);
       if (savedAnalysisReport) {
         setAnalysisReport(savedAnalysisReport);
@@ -61,12 +62,13 @@ export default function Step5AiAnalysisClient() {
     }
 
     setIsLoading(true);
-    setAnalysisReport("");
+    setAnalysisReport(""); // Clear previous report
     try {
       const input: AiSignatureAnalyzerInput = { draftCopy };
       const result = await aiSignatureAnalyzer(input); 
-      setAnalysisReport(result.analysisReport);
+      setAnalysisReport(result.analysisReport); // The flow now returns a single 'analysisReport' field
       if (typeof window !== 'undefined' && result.analysisReport) {
+        // Save the full report as "suggestions" for the next step
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, result.analysisReport);
       }
       toast({
@@ -103,9 +105,9 @@ export default function Step5AiAnalysisClient() {
       toast({ title: "稿件为空", description: "请输入稿件内容后再继续。", variant: "destructive" });
       return;
     }
-    localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
+    localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy); // Pass the (potentially edited) draft
     if (analysisReport.trim()) {
-        localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport);
+        localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport); // Pass the full report
     }
     toast({ title: "准备就绪", description: "正在前往AI特征消除步骤..." });
     router.push('/step6-ai-elimination'); 
@@ -117,6 +119,7 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
+    // Clear suggestions if skipping step 6, as they are for step 6
     localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS); 
     toast({ title: "准备就绪", description: "正在跳至最终润色步骤..." });
     router.push('/step7-final-polishing'); 
@@ -126,18 +129,26 @@ export default function Step5AiAnalysisClient() {
     <Card className="flex-1 flex flex-col">
       <CardHeader>
         <CardTitle>当前待分析稿件</CardTitle>
-        <CardDescription>此处显示从上一步骤传入或您在此处编辑的稿件内容。点击下方按钮开始分析。</CardDescription>
+        <CardDescription>从上一步骤传入或您在此处编辑的稿件内容。左侧为Markdown编辑区，右侧为实时预览。</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-4">
-        <div className="grid gap-2 flex-1">
-          <Label htmlFor="draftCopy">稿件内容</Label>
-          <Textarea
-            id="draftCopy"
-            placeholder="请粘贴或输入待分析的稿件内容..."
-            value={draftCopy}
-            onChange={(e) => setDraftCopy(e.target.value)}
-            className="flex-1 resize-none text-sm min-h-[300px] max-h-[65vh]"
-          />
+      <CardContent className="flex-1 flex flex-col md:flex-row gap-2 space-y-0">
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label htmlFor="draftCopy" className="mb-1.5">稿件内容 (Markdown)</Label>
+            <Textarea
+              id="draftCopy"
+              placeholder="请粘贴或输入待分析的稿件内容 (Markdown)..."
+              value={draftCopy}
+              onChange={(e) => setDraftCopy(e.target.value)}
+              className="flex-1 resize-none text-sm min-h-[300px]"
+            />
+        </div>
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label className="mb-1.5">实时预览</Label>
+            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {draftCopy || "稿件预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
         </div>
       </CardContent>
       <CardFooter>
@@ -155,7 +166,7 @@ export default function Step5AiAnalysisClient() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>AI特征诊断与优化指南</CardTitle>
-            <CardDescription>AI对稿件的深度分析报告。</CardDescription>
+            <CardDescription>AI对稿件的深度分析报告 (Markdown 预览)。</CardDescription>
           </div>
           <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading} title="复制原始Markdown报告">
             <Copy className="h-4 w-4" />

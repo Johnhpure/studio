@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Save, Info } from "lucide-react";
+import { Copy, Save, Info, FileText, ListChecks } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
@@ -30,8 +32,7 @@ export default function Step7FinalPolishingClient() {
     }
   }, []);
 
-  const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newDraft = e.target.value;
+  const handleDraftChange = (newDraft: string) => {
     setFinalDraft(newDraft);
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, newDraft);
@@ -73,29 +74,36 @@ export default function Step7FinalPolishingClient() {
         });
       });
   };
+  
+  const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
+    <div className="mb-2">
+      <Label className="text-xs font-medium flex items-center mb-0.5">
+        {Icon && <Icon className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />}
+        {title}
+      </Label>
+      <ScrollArea className="min-h-[60px] max-h-[calc(35vh-2rem)] w-full rounded-md border p-2 bg-muted/30 text-xs">
+         {isMarkdown ? (
+             <ReactMarkdown className="prose dark:prose-invert max-w-none" remarkPlugins={[remarkGfm]}>{content || "无相关信息"}</ReactMarkdown>
+         ) : (
+            <pre className="whitespace-pre-wrap break-all">{content || "无相关信息"}</pre>
+         )}
+      </ScrollArea>
+    </div>
+  );
+
 
   const leftPane = (
-    <div className="flex flex-col space-y-4 h-full">
+    <div className="flex flex-col space-y-3 h-full">
       <Card className="flex-grow flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center"><Info className="mr-2 h-5 w-5 text-blue-500" />关键信息回顾</CardTitle>
-          <CardDescription>在此查阅甲方需求和您确认的创作大纲。</CardDescription>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center"><Info className="mr-2 h-4 w-4 text-blue-500" />关键信息回顾</CardTitle>
+          <CardDescription className="text-xs">在此查阅甲方需求和您确认的创作大纲。</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto">
-          <div>
-            <Label htmlFor="clientReqReview" className="text-sm font-medium">甲方核心需求 (步骤一)</Label>
-            <ScrollArea className="h-full max-h-[35vh] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
-              <pre className="whitespace-pre-wrap break-all">{clientRequirements}</pre>
-            </ScrollArea>
-          </div>
-          <div>
-            <Label htmlFor="outlineReview" className="text-sm font-medium">创作大纲 (步骤二)</Label>
-            <ScrollArea className="h-full max-h-[35vh] w-full rounded-md border p-3 bg-muted/30 text-sm mt-1">
-               <pre className="whitespace-pre-wrap break-all">{creativeOutline}</pre>
-            </ScrollArea>
-          </div>
+        <CardContent className="flex-1 overflow-y-auto space-y-1.5 px-4 pt-0 pb-2">
+          <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} isMarkdown />
+          <ReviewItem title="创作大纲 (步骤二)" content={creativeOutline} icon={ListChecks} isMarkdown />
         </CardContent>
-         <CardFooter>
+         <CardFooter className="px-4 pb-3 pt-2">
           <Button onClick={handleSaveChanges} className="w-full">
             <Save className="mr-2 h-4 w-4" />
             保存当前修改
@@ -109,22 +117,32 @@ export default function Step7FinalPolishingClient() {
      <Card className="flex-1 flex flex-col">
       <CardHeader>
         <CardTitle>最终稿件编辑区</CardTitle>
-        <CardDescription>请在此处进行最终的修改、润色和校对。您的修改会自动保存到浏览器。</CardDescription>
+        <CardDescription>请在此处进行最终的修改、润色和校对。您的修改会自动保存。左侧为Markdown编辑区，右侧为实时预览。</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <Label htmlFor="finalDraftEditor" className="sr-only">最终稿件编辑器</Label>
-        <Textarea
-          id="finalDraftEditor"
-          placeholder="在此处加载并编辑您的稿件..."
-          value={finalDraft}
-          onChange={handleDraftChange}
-          className="flex-1 resize-none text-sm min-h-[300px] max-h-[70vh] bg-background"
-        />
+      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label htmlFor="finalDraftEditor" className="mb-1.5">稿件编辑区 (Markdown)</Label>
+            <Textarea
+              id="finalDraftEditor"
+              placeholder="在此处加载并编辑您的稿件 (Markdown)..."
+              value={finalDraft}
+              onChange={(e) => handleDraftChange(e.target.value)}
+              className="flex-1 resize-none text-sm min-h-[300px] bg-background"
+            />
+        </div>
+        <div className="flex-1 flex flex-col md:w-1/2">
+            <Label className="mb-1.5">实时预览区</Label>
+            <ScrollArea className="flex-1 rounded-md border p-4 bg-background min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {finalDraft || "稿件预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
+        </div>
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button onClick={handleCopyContent} className="w-full md:w-auto">
           <Copy className="mr-2 h-4 w-4" />
-          复制稿件内容
+          复制稿件内容 (Markdown)
         </Button>
       </CardFooter>
     </Card>
