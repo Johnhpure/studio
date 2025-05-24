@@ -9,11 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy, Eye, Edit3 } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy, Eye, Edit3, FilePenLine } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
+import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
+import { STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
+
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
@@ -21,6 +25,8 @@ const LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA = "step2_finalOutline_metadata";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 const LOCAL_STORAGE_KEY_STEP4_TEMP_INSTRUCTIONS = "step4_tempInstructions";
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
+
+const PROMPT_KEY_STEP4: "step4_draftGeneration" = "step4_draftGeneration";
 
 
 interface OutlineMetadata {
@@ -32,6 +38,7 @@ interface OutlineMetadata {
 export default function Step4DraftCreationClient() {
   const router = useRouter();
   const { toast } = useToast();
+  const { getTemporaryPrompt, setTemporaryPrompt } = useTemporaryPrompts();
 
   const [clientRequirements, setClientRequirements] = useState("");
   const [creativeOutline, setCreativeOutline] = useState("");
@@ -45,6 +52,7 @@ export default function Step4DraftCreationClient() {
   const [isPreviewingDraft, setIsPreviewingDraft] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -103,13 +111,13 @@ export default function Step4DraftCreationClient() {
       toast({ title: "创作要素不完整", description: "请确保已完成步骤一、二，并获取了所有必要的创作输入信息。", variant: "destructive" });
       return;
     }
-     // writingStyleGuide can be the placeholder if skipped
 
     setIsLoading(true);
     try {
       const actualWritingStyleGuide = (writingStyleGuide === "（已跳过风格学习，将使用通用专业风格）" || !writingStyleGuide.trim()) 
                                      ? undefined 
                                      : writingStyleGuide;
+      const temporaryPrompt = getTemporaryPrompt(PROMPT_KEY_STEP4);
 
       const input: GenerateDraftInput = {
         clientRequirements,
@@ -119,6 +127,7 @@ export default function Step4DraftCreationClient() {
         brand: outlineMetadata.selectedBrand,
         wordCount: outlineMetadata.wordCount,
         tempFineTuneInstructions: tempFineTuneInstructions.trim() || undefined,
+        overridePromptTemplate: temporaryPrompt,
       };
       const result = await generateDraft(input);
       setGeneratedDraft(result.generatedDraft);
@@ -160,6 +169,11 @@ export default function Step4DraftCreationClient() {
       });
   };
 
+  const handleSaveTemporaryPrompt = (editedPrompt: string) => {
+    setTemporaryPrompt(PROMPT_KEY_STEP4, editedPrompt);
+    toast({ title: "提示词已临时保存", description: "本次AI生成将使用您编辑的提示词。" });
+  };
+
   const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
     <div className="mb-3">
       <Label className="text-sm font-medium flex items-center mb-1">
@@ -175,9 +189,14 @@ export default function Step4DraftCreationClient() {
   const leftPane = (
     <div className="flex flex-col space-y-3 h-full">
       <Card className="flex-grow flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center"><Info className="mr-2 h-5 w-5" />创作依据回顾</CardTitle>
-          <CardDescription className="text-xs">以下是AI创作本稿件所依据的核心信息。</CardDescription>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center"><Info className="mr-2 h-5 w-5" />创作依据回顾</CardTitle>
+            <CardDescription className="text-xs">以下是AI创作本稿件所依据的核心信息。</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsPromptModalOpen(true)}>
+            <FilePenLine className="mr-2 h-4 w-4" /> 查看/编辑提示词
+          </Button>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto space-y-2 px-4 pt-0 pb-3">
           <ReviewItem title="甲方核心需求 (步骤一)" content={clientRequirements} icon={FileText} />
@@ -201,6 +220,7 @@ export default function Step4DraftCreationClient() {
                   variant="outline"
                   size="xs"
                   onClick={() => setIsPreviewingTempInstructions(!isPreviewingTempInstructions)}
+                  disabled={!tempFineTuneInstructions.trim()}
                 >
                   {isPreviewingTempInstructions ? <Edit3 className="mr-1 h-3 w-3" /> : <Eye className="mr-1 h-3 w-3" />}
                   {isPreviewingTempInstructions ? "编辑" : "预览"}
@@ -228,6 +248,14 @@ export default function Step4DraftCreationClient() {
           </Button>
         </CardFooter>
       </Card>
+      <PromptEditModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        defaultPromptTemplate={STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE}
+        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP4)}
+        onSave={handleSaveTemporaryPrompt}
+        stepTitle="步骤四：AI智能创作初稿"
+      />
     </div>
   );
 
@@ -243,6 +271,7 @@ export default function Step4DraftCreationClient() {
               variant="outline"
               size="sm"
               onClick={() => setIsPreviewingDraft(!isPreviewingDraft)}
+              disabled={!generatedDraft.trim()}
             >
               {isPreviewingDraft ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
               {isPreviewingDraft ? "编辑" : "预览"}
@@ -254,7 +283,11 @@ export default function Step4DraftCreationClient() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        {isPreviewingDraft ? (
+        {isLoading && !generatedDraft ? (
+            <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : isPreviewingDraft ? (
             <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/20 min-h-[300px] prose dark:prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {generatedDraft || "稿件预览将在此处显示..."}
@@ -287,5 +320,3 @@ export default function Step4DraftCreationClient() {
     </div>
   );
 }
-
-    

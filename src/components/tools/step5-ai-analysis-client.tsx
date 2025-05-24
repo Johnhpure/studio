@@ -7,18 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
-import { aiSignatureAnalyzer } from "@/ai/flows/ai-signature-analyzer"; // Ensure correct import
+import { aiSignatureAnalyzer } from "@/ai/flows/ai-signature-analyzer"; 
 import type { AiSignatureAnalyzerInput } from "@/ai/flows/ai-signature-analyzer";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Microscope, Zap, Edit, Copy, Eye, Edit3 } from "lucide-react"; 
+import { Loader2, Microscope, Zap, Edit, Copy, Eye, Edit3, FilePenLine } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
+import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
+import { STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
 const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // This will store the full analysis report
+const PROMPT_KEY_STEP5: "step5_aiAnalysis" = "step5_aiAnalysis";
+
 
 export default function Step5AiAnalysisClient() {
   const router = useRouter();
@@ -27,17 +32,15 @@ export default function Step5AiAnalysisClient() {
   const [analysisReport, setAnalysisReport] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { getTemporaryPrompt, setTemporaryPrompt } = useTemporaryPrompts();
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const draftFromPrevStep = localStorage.getItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT);
       const savedDraftCopy = localStorage.getItem(LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY);
       
-      if (draftFromPrevStep) {
-        setDraftCopy(draftFromPrevStep);
-      } else if (savedDraftCopy) {
-        setDraftCopy(savedDraftCopy);
-      }
+      setDraftCopy(draftFromPrevStep || savedDraftCopy || "");
 
       const savedAnalysisReport = localStorage.getItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS);
       if (savedAnalysisReport) {
@@ -65,7 +68,11 @@ export default function Step5AiAnalysisClient() {
     setIsLoading(true);
     setAnalysisReport(""); 
     try {
-      const input: AiSignatureAnalyzerInput = { draftCopy };
+      const temporaryPrompt = getTemporaryPrompt(PROMPT_KEY_STEP5);
+      const input: AiSignatureAnalyzerInput = { 
+        draftCopy,
+        overridePromptTemplate: temporaryPrompt,
+      };
       const result = await aiSignatureAnalyzer(input); 
       setAnalysisReport(result.analysisReport); 
       if (typeof window !== 'undefined' && result.analysisReport) {
@@ -106,8 +113,10 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy); 
-    if (analysisReport.trim()) {
+    if (analysisReport.trim()) { // Ensure report is saved if generated
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport); 
+    } else { // If no report generated yet, clear any old one
+        localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS);
     }
     toast({ title: "准备就绪", description: "正在前往AI特征消除步骤..." });
     router.push('/step6-ai-elimination'); 
@@ -124,19 +133,30 @@ export default function Step5AiAnalysisClient() {
     router.push('/step7-final-polishing'); 
   };
 
+  const handleSaveTemporaryPrompt = (editedPrompt: string) => {
+    setTemporaryPrompt(PROMPT_KEY_STEP5, editedPrompt);
+    toast({ title: "提示词已临时保存", description: "本次AI生成将使用您编辑的提示词。" });
+  };
+
   const leftPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
             <CardTitle>当前待分析稿件</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPreviewingDraft(!isPreviewingDraft)}
-            >
-              {isPreviewingDraft ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-              {isPreviewingDraft ? "编辑" : "预览"}
-            </Button>
+            <div className="flex items-center gap-2">
+                <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPreviewingDraft(!isPreviewingDraft)}
+                disabled={!draftCopy.trim()}
+                >
+                {isPreviewingDraft ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                {isPreviewingDraft ? "编辑" : "预览"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setIsPromptModalOpen(true)}>
+                    <FilePenLine className="mr-2 h-4 w-4" /> 查看/编辑提示词
+                </Button>
+            </div>
         </div>
         <CardDescription>从上一步骤传入或您在此处编辑的稿件内容。可切换编辑/预览模式。</CardDescription>
       </CardHeader>
@@ -163,6 +183,14 @@ export default function Step5AiAnalysisClient() {
           <span>{isLoading ? "分析中..." : "开始AI特征检测与分析"}</span>
         </Button>
       </CardFooter>
+      <PromptEditModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        defaultPromptTemplate={STEP_5_AI_ANALYSIS_PROMPT_TEMPLATE}
+        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP5)}
+        onSave={handleSaveTemporaryPrompt}
+        stepTitle="步骤五：AI特征检测与分析"
+      />
     </Card>
   );
 

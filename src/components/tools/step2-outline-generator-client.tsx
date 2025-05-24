@@ -12,11 +12,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward, FilePenLine } from "lucide-react"; // Added FilePenLine
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; // Import modal
+import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext"; // Import context hook
+import { getDefaultPromptTemplate, STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates"; // Import templates
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_USER_INSTRUCTIONS = "step2_userInstructions";
@@ -28,6 +31,8 @@ const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
 const LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA = "step2_finalOutline_metadata";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 
+const PROMPT_KEY_STEP2: "step2_outlineGeneration" = "step2_outlineGeneration";
+
 
 const MANUSCRIPT_TYPES = ["预热品牌稿", "品牌稿", "产品稿", "行业稿", "预热稿", "新闻通稿", "活动稿"] as const;
 const BRANDS = ["添可", "创维", "酷开", "美的", "美芝威灵", "京东方"] as const;
@@ -36,6 +41,7 @@ const WORD_COUNT_OPTIONS = ["1500字", "2000字", "自定义"] as const;
 export default function Step2OutlineGeneratorClient() {
   const router = useRouter();
   const { toast } = useToast();
+  const { temporaryPrompts, setTemporaryPrompt, getTemporaryPrompt } = useTemporaryPrompts();
 
   const [clientRequirements, setClientRequirements] = useState("");
   const [userInstructions, setUserInstructions] = useState("");
@@ -50,6 +56,8 @@ export default function Step2OutlineGeneratorClient() {
   const [isPreviewingEditedOutline, setIsPreviewingEditedOutline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setClientRequirements(localStorage.getItem(LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS) || "");
@@ -61,7 +69,7 @@ export default function Step2OutlineGeneratorClient() {
       const initialEditedOutline = localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE);
       if (initialEditedOutline) {
         setEditedOutline(initialEditedOutline);
-        setGeneratedOutline(initialEditedOutline); 
+        // setGeneratedOutline(initialEditedOutline); // No longer needed if we only show editedOutline
       }
     }
   }, []);
@@ -100,19 +108,22 @@ export default function Step2OutlineGeneratorClient() {
     }
 
     setIsLoading(true);
-    setGeneratedOutline(""); 
+    // setGeneratedOutline(""); // No longer directly displayed this way
     setEditedOutline("");
     try {
       const wordCountValue = wordCountOption === "自定义" ? parseInt(customWordCount) : wordCountOption;
+      const temporaryPrompt = getTemporaryPrompt(PROMPT_KEY_STEP2);
+
       const input: GenerateOutlineInput = {
         clientRequirements,
         userInstructions,
         manuscriptType: manuscriptType as typeof MANUSCRIPT_TYPES[number],
         brand: selectedBrand as typeof BRANDS[number],
         wordCount: wordCountValue,
+        overridePromptTemplate: temporaryPrompt,
       };
       const result = await generateOutline(input);
-      setGeneratedOutline(result.generatedOutline);
+      // setGeneratedOutline(result.generatedOutline);
       setEditedOutline(result.generatedOutline); 
       toast({ title: "成功", description: "稿件大纲已生成！您可以进行编辑。" });
     } catch (error) {
@@ -147,7 +158,6 @@ export default function Step2OutlineGeneratorClient() {
 
   const handleSkipToStep4 = () => {
     if (!prepareForNextStep()) return;
-    // Clear any existing style report as we are skipping Step 3
     if (typeof window !== 'undefined') {
       localStorage.removeItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT);
     }
@@ -170,6 +180,12 @@ export default function Step2OutlineGeneratorClient() {
       });
   };
 
+  const handleSaveTemporaryPrompt = (editedPrompt: string) => {
+    setTemporaryPrompt(PROMPT_KEY_STEP2, editedPrompt);
+    toast({ title: "提示词已临时保存", description: "本次AI生成将使用您编辑的提示词。" });
+  };
+
+
   const leftPane = (
     <div className="flex flex-col space-y-4 h-full">
       <Card className="flex-grow flex flex-col">
@@ -179,14 +195,21 @@ export default function Step2OutlineGeneratorClient() {
         </CardHeader>
         <CardContent className="flex-1">
           <ScrollArea className="h-full max-h-[20vh] w-full rounded-md border p-3 bg-muted/50 text-sm">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{clientRequirements || "未找到甲方核心需求，请返回步骤一输入。"}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose dark:prose-invert max-w-none">
+                {clientRequirements || "未找到甲方核心需求，请返回步骤一输入。"}
+            </ReactMarkdown>
           </ScrollArea>
         </CardContent>
       </Card>
       <Card className="flex-grow-[2] flex flex-col">
-        <CardHeader>
-          <CardTitle>您的创作指令与参数</CardTitle>
-          <CardDescription>请提供详细的创作指令，并选择相关参数，以指导AI生成符合要求的大纲。</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>您的创作指令与参数</CardTitle>
+                <CardDescription>请提供详细的创作指令，并选择相关参数，以指导AI生成符合要求的大纲。</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setIsPromptModalOpen(true)}>
+                <FilePenLine className="mr-2 h-4 w-4" /> 查看/编辑提示词
+            </Button>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto max-h-[calc(60vh-4rem)]">
           <div className="grid gap-1.5 flex-shrink-0">
@@ -196,6 +219,7 @@ export default function Step2OutlineGeneratorClient() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsPreviewingUserInstructions(!isPreviewingUserInstructions)}
+                  disabled={!userInstructions.trim()}
                 >
                   {isPreviewingUserInstructions ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
                   {isPreviewingUserInstructions ? "编辑" : "预览"}
@@ -264,6 +288,14 @@ export default function Step2OutlineGeneratorClient() {
           </Button>
         </CardFooter>
       </Card>
+      <PromptEditModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        defaultPromptTemplate={STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE}
+        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP2)}
+        onSave={handleSaveTemporaryPrompt}
+        stepTitle="步骤二：AI生成稿件创作大纲"
+      />
     </div>
   );
 
@@ -272,13 +304,14 @@ export default function Step2OutlineGeneratorClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />AI生成的稿件大纲</CardTitle>
-            <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以切换编辑/预览模式，或直接复制Markdown。</CardDescription>
+            <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以编辑或预览。</CardDescription>
         </div>
         <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsPreviewingEditedOutline(!isPreviewingEditedOutline)}
+              disabled={!editedOutline.trim()}
             >
               {isPreviewingEditedOutline ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
               {isPreviewingEditedOutline ? "编辑" : "预览"}
@@ -290,7 +323,11 @@ export default function Step2OutlineGeneratorClient() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        {isPreviewingEditedOutline ? (
+        {isLoading && !editedOutline ? (
+            <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : isPreviewingEditedOutline ? (
              <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {editedOutline || "大纲预览将在此处显示..."}
@@ -325,5 +362,3 @@ export default function Step2OutlineGeneratorClient() {
     </div>
   );
 }
-
-    

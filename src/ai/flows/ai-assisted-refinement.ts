@@ -13,15 +13,16 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE } from '@/ai/prompt-templates'; // Import default template
+import Handlebars from 'handlebars';
 
 const AiAssistedRefinementInputSchema = z.object({
-  draftText: z
-    .string()
-    .describe('The draft text to be refined.'),
-  guidance: z
-    .string()
-    .optional()
-    .describe('Comprehensive guidance for refinement. This can include AI-generated suggestions from Step 5, learned user writing style traits from Step 3, and/or specific user-provided fine-tuning instructions for the current refinement step. If provided, the AI should strictly follow these instructions.'),
+  draftText: z.string().describe('The draft text to be refined. 【原始稿件】'),
+  analysisAndSuggestions: z.string().optional().describe('The AI feature analysis and optimization suggestions from Step 5. 【AI特征分析与优化建议】'),
+  writingStyleReference: z.string().optional().describe('The learned user writing style traits/report from Step 3. 【写作风格参考】'),
+  clientRequirementsAndOutline: z.string().optional().describe('A summary of client requirements and the confirmed outline from Steps 1 & 2, including manuscript type, brand, word count. 【甲方核心需求与大纲参考】'),
+  extraOptimizationInstructions: z.string().optional().describe('Additional user-provided fine-tuning instructions for the current refinement step. 【额外优化指令】'),
+  overridePromptTemplate: z.string().optional().describe("A temporary Handlebars prompt template string to use instead of the default."),
 });
 
 export type AiAssistedRefinementInput = z.infer<typeof AiAssistedRefinementInputSchema>;
@@ -36,32 +37,34 @@ export async function aiAssistedRefinement(input: AiAssistedRefinementInput): Pr
   return aiAssistedRefinementFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiAssistedRefinementPrompt',
-  input: {schema: AiAssistedRefinementInputSchema},
-  output: {schema: AiAssistedRefinementOutputSchema},
-  prompt: `You are an expert AI writing assistant. Your task is to refine the provided "Draft Text".
-The primary goals are to eliminate any AI-like writing patterns, make the text sound natural and authentic, while strictly adhering to the "Provided Guidance".
-The refined text must preserve the core facts, data, and intent of the original "Draft Text".
-
-Draft Text:
-{{{draftText}}}
-
-Provided Guidance (Follow these instructions carefully for refinement):
-{{{guidance}}}
-
-Based on the "Draft Text" and "Provided Guidance", produce the "Refined Text".
-Refined Text:`,
-});
-
 const aiAssistedRefinementFlow = ai.defineFlow(
   {
     name: 'aiAssistedRefinementFlow',
     inputSchema: AiAssistedRefinementInputSchema,
     outputSchema: AiAssistedRefinementOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const promptDataForTemplating = {
+      draftText: input.draftText,
+      analysisAndSuggestions: input.analysisAndSuggestions,
+      writingStyleReference: input.writingStyleReference,
+      clientRequirementsAndOutline: input.clientRequirementsAndOutline,
+      extraOptimizationInstructions: input.extraOptimizationInstructions,
+    };
+
+    const templateString = input.overridePromptTemplate || STEP_6_AI_REFINEMENT_PROMPT_TEMPLATE;
+    const compiledTemplate = Handlebars.compile(templateString);
+    const finalPromptString = compiledTemplate(promptDataForTemplating);
+    
+    const { output } = await ai.generate({
+        prompt: finalPromptString,
+        output: { schema: AiAssistedRefinementOutputSchema },
+        model: 'googleai/gemini-2.0-flash' // Or your configured model
+    });
+    
+    if (!output) {
+        throw new Error("AI did not return an output for AI-assisted refinement.");
+    }
+    return output;
   }
 );
