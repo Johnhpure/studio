@@ -26,14 +26,14 @@ const navItems = [
 ];
 
 const progressLabels = [
-  "开始赚钱!",             // 0% (e.g., /settings page or initial load)
-  "需求捕获... ¥25 进度!",   // After Step 1 
-  "大纲构建... ¥50 进度!",   // After Step 2
-  "风格学习... ¥80 进度!",   // After Step 3
-  "AI初稿... ¥120 进度!",  // After Step 4
-  "特征分析... ¥150 进度!",  // After Step 5
-  "AI消除... ¥180 进度!",   // After Step 6
-  "搞定! ¥200 到手!",      // After Step 7 (100%)
+  "磨刀霍霍向甲方！",             // 0%
+  "需求分析中... 目标锁定25大洋！",   // After Step 1 
+  "大纲布局已成... 50大洋在望！",   // After Step 2
+  "AI正在偷师学艺... 风格拿捏80大洋！",   // After Step 3
+  "AI爆肝输出中... 120大洋初见雏形！",  // After Step 4
+  "AI火眼金睛找bug... 净化稿件冲150！",  // After Step 5
+  "AI注入灵魂... 180大洋闪闪发光！",   // After Step 6
+  "收工！¥200入袋为安，敬若涵YYDS！",      // After Step 7 (100%)
 ];
 
 export function AppSidebar() {
@@ -99,20 +99,20 @@ export function AppSidebar() {
           <div className="flex flex-col items-center px-2 py-3 space-y-2">
             <p 
               className="text-xs font-medium text-center text-sidebar-accent-foreground/90 h-8 flex items-center justify-center"
-              title={`当前进度: ${Math.round(progressPercent)}%`}
+              title={`当前搞钱进度: ${Math.round(progressPercent)}%`}
             >
               {displayedLabel}
             </p>
             <div 
-              className="relative h-32 w-2.5 bg-sidebar-foreground/20 rounded-full overflow-hidden"
+              className="relative h-32 w-2.5 bg-sidebar-foreground/20 rounded-full overflow-hidden" // Track
               role="progressbar"
               aria-valuenow={progressPercent}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="创作进度"
-            > {/* Track */}
+              aria-label="搞钱进度" // Updated aria-label
+            > 
               <div
-                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-all duration-300 ease-linear" /* Fill */
+                className="absolute bottom-0 left-0 w-full bg-sidebar-accent rounded-full transition-all duration-500 ease-out" // Fill with animation
                 style={{ height: `${progressPercent}%` }}
               />
             </div>
