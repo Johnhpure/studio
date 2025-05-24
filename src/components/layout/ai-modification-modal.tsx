@@ -109,25 +109,29 @@ export function AiModificationModal({
         {/* Middle: Original Content Display */}
         <div className="py-2 flex-1 flex flex-col min-h-[25vh]">
           <Label className="text-sm font-medium mb-1">原始内容 (只读)</Label>
-          <ScrollArea className="flex-grow rounded-md border p-3 bg-muted/30 prose dark:prose-invert max-w-none text-xs">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
+          <ScrollArea className="flex-grow rounded-md border bg-muted/30">
+            <div className="p-3 prose dark:prose-invert max-w-none text-xs">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
+            </div>
           </ScrollArea>
         </div>
 
         {/* Bottom: AI Refined Result Display */}
         <div className="py-2 flex-1 flex flex-col min-h-[25vh]">
           <Label className="text-sm font-medium mb-1">AI优化结果 (只读)</Label>
-          <ScrollArea className="flex-grow rounded-md border p-3 bg-muted/50 prose dark:prose-invert max-w-none text-xs">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" /> 
-                <p className="ml-2 text-muted-foreground">AI思考中...</p>
-              </div>
-            ) : refinedContentResult !== null ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{refinedContentResult}</ReactMarkdown>
-            ) : (
-              <p className="text-muted-foreground">AI优化后的内容将显示在此处...</p>
-            )}
+          <ScrollArea className="flex-grow rounded-md border bg-muted/50">
+             <div className="p-3 prose dark:prose-invert max-w-none text-xs">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" /> 
+                    <p className="ml-2 text-muted-foreground">AI思考中...</p>
+                  </div>
+                ) : refinedContentResult !== null ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{refinedContentResult}</ReactMarkdown>
+                ) : (
+                  <p className="text-muted-foreground">AI优化后的内容将显示在此处...</p>
+                )}
+            </div>
           </ScrollArea>
         </div>
         
@@ -152,3 +156,4 @@ export function AiModificationModal({
     </Dialog>
   );
 }
+
