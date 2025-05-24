@@ -9,12 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy, Eye, Edit3, FilePenLine } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, Info, Palette, ListChecks, Edit, Zap, Copy, Eye, Edit3, FilePenLine, WandSparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateDraft, type GenerateDraftInput } from "@/ai/flows/draft-generation";
+import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow"; // Import new flow
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal";
+import { AiModificationModal } from "@/components/layout/ai-modification-modal"; // Import new modal
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
 import { STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
 
@@ -53,6 +55,7 @@ export default function Step4DraftCreationClient() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [isAiModificationModalOpen, setIsAiModificationModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -130,10 +133,9 @@ export default function Step4DraftCreationClient() {
         overridePromptTemplate: temporaryPrompt,
       };
       const result = await generateDraft(input);
-      setGeneratedDraft(result.generatedDraft);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, result.generatedDraft);
-      }
+      // setGeneratedDraft(result.generatedDraft); // Will be handled by handleGeneratedDraftChange
+      handleGeneratedDraftChange(result.generatedDraft);
+
       toast({ title: "成功", description: "稿件初稿已生成！您可以进行编辑或进入下一步。" });
     } catch (error: any) {
       console.error("Error generating draft:", error);
@@ -148,9 +150,7 @@ export default function Step4DraftCreationClient() {
       toast({ title: "稿件内容为空", description: "请先生成或编辑稿件内容，再进入下一步。", variant: "destructive"});
       return;
     }
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, generatedDraft);
-    }
+    // generatedDraft is already saved to localStorage by handleGeneratedDraftChange
     router.push(path);
   };
 
@@ -172,6 +172,19 @@ export default function Step4DraftCreationClient() {
   const handleSaveTemporaryPrompt = (editedPrompt: string) => {
     setTemporaryPrompt(PROMPT_KEY_STEP4, editedPrompt);
     toast({ title: "提示词已临时保存", description: "本次AI生成将使用您编辑的提示词。" });
+  };
+
+  const handleApplyDraftModification = async (originalContent: string, userPrompt: string): Promise<string> => {
+    const input: RefineTextWithPromptInput = {
+      originalText: originalContent,
+      userPrompt: userPrompt,
+    };
+    const result: RefineTextWithPromptOutput = await refineTextWithPrompt(input);
+    return result.refinedText;
+  };
+
+  const handleSaveRefinedDraft = (refinedDraftContent: string) => {
+    handleGeneratedDraftChange(refinedDraftContent); // This updates state and localStorage
   };
 
   const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
@@ -248,14 +261,6 @@ export default function Step4DraftCreationClient() {
           </Button>
         </CardFooter>
       </Card>
-      <PromptEditModal
-        isOpen={isPromptModalOpen}
-        onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE}
-        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP4)}
-        onSave={handleSaveTemporaryPrompt}
-        stepTitle="步骤四：AI智能创作初稿"
-      />
     </div>
   );
 
@@ -267,6 +272,15 @@ export default function Step4DraftCreationClient() {
             <CardDescription>AI根据您的所有输入创作的初稿。可切换编辑/预览模式。</CardDescription>
         </div>
         <div className="flex items-center gap-2">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAiModificationModalOpen(true)}
+                disabled={!generatedDraft.trim() || isLoading}
+                title="AI辅助修改初稿"
+            >
+                <WandSparkles className="mr-2 h-4 w-4" /> AI辅助修改
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -317,6 +331,22 @@ export default function Step4DraftCreationClient() {
   return (
     <div className="h-[calc(100vh-8rem)] p-1 md:p-0">
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
+      <PromptEditModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        defaultPromptTemplate={STEP_4_DRAFT_GENERATION_PROMPT_TEMPLATE}
+        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP4)}
+        onSave={handleSaveTemporaryPrompt}
+        stepTitle="步骤四：AI智能创作初稿"
+      />
+      <AiModificationModal
+        isOpen={isAiModificationModalOpen}
+        onClose={() => setIsAiModificationModalOpen(false)}
+        originalContent={generatedDraft}
+        onApplyModification={handleApplyDraftModification}
+        onSaveRefinedContent={handleSaveRefinedDraft}
+        modalTitle="AI 辅助修改初稿"
+      />
     </div>
   );
 }

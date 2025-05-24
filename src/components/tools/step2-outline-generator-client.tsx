@@ -12,14 +12,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward, FilePenLine } from "lucide-react"; // Added FilePenLine
+import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward, FilePenLine, WandSparkles } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
+import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow"; // Import new flow
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; // Import modal
-import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext"; // Import context hook
-import { getDefaultPromptTemplate, STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates"; // Import templates
+import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; 
+import { AiModificationModal } from "@/components/layout/ai-modification-modal"; // Import new modal
+import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext"; 
+import { STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE } from "@/ai/prompt-templates";
 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_USER_INSTRUCTIONS = "step2_userInstructions";
@@ -32,7 +34,6 @@ const LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA = "step2_finalOutline_metadata";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
 
 const PROMPT_KEY_STEP2: "step2_outlineGeneration" = "step2_outlineGeneration";
-
 
 const MANUSCRIPT_TYPES = ["预热品牌稿", "品牌稿", "产品稿", "行业稿", "预热稿", "新闻通稿", "活动稿"] as const;
 const BRANDS = ["添可", "创维", "酷开", "美的", "美芝威灵", "京东方"] as const;
@@ -51,12 +52,13 @@ export default function Step2OutlineGeneratorClient() {
   const [wordCountOption, setWordCountOption] = useState<string>(WORD_COUNT_OPTIONS[0]); 
   const [customWordCount, setCustomWordCount] = useState<string>("");
 
-  const [generatedOutline, setGeneratedOutline] = useState("");
   const [editedOutline, setEditedOutline] = useState("");
   const [isPreviewingEditedOutline, setIsPreviewingEditedOutline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [isAiModificationModalOpen, setIsAiModificationModalOpen] = useState(false);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -69,7 +71,6 @@ export default function Step2OutlineGeneratorClient() {
       const initialEditedOutline = localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE);
       if (initialEditedOutline) {
         setEditedOutline(initialEditedOutline);
-        // setGeneratedOutline(initialEditedOutline); // No longer needed if we only show editedOutline
       }
     }
   }, []);
@@ -108,7 +109,6 @@ export default function Step2OutlineGeneratorClient() {
     }
 
     setIsLoading(true);
-    // setGeneratedOutline(""); // No longer directly displayed this way
     setEditedOutline("");
     try {
       const wordCountValue = wordCountOption === "自定义" ? parseInt(customWordCount) : wordCountOption;
@@ -123,7 +123,6 @@ export default function Step2OutlineGeneratorClient() {
         overridePromptTemplate: temporaryPrompt,
       };
       const result = await generateOutline(input);
-      // setGeneratedOutline(result.generatedOutline);
       setEditedOutline(result.generatedOutline); 
       toast({ title: "成功", description: "稿件大纲已生成！您可以进行编辑。" });
     } catch (error) {
@@ -185,6 +184,19 @@ export default function Step2OutlineGeneratorClient() {
     toast({ title: "提示词已临时保存", description: "本次AI生成将使用您编辑的提示词。" });
   };
 
+  const handleApplyOutlineModification = async (originalContent: string, userPrompt: string): Promise<string> => {
+    const input: RefineTextWithPromptInput = {
+      originalText: originalContent,
+      userPrompt: userPrompt,
+    };
+    const result: RefineTextWithPromptOutput = await refineTextWithPrompt(input);
+    return result.refinedText;
+  };
+
+  const handleSaveRefinedOutline = (refinedOutline: string) => {
+    setEditedOutline(refinedOutline);
+    // LocalStorage will be updated by the useEffect for editedOutline
+  };
 
   const leftPane = (
     <div className="flex flex-col space-y-4 h-full">
@@ -288,14 +300,6 @@ export default function Step2OutlineGeneratorClient() {
           </Button>
         </CardFooter>
       </Card>
-      <PromptEditModal
-        isOpen={isPromptModalOpen}
-        onClose={() => setIsPromptModalOpen(false)}
-        defaultPromptTemplate={STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE}
-        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP2)}
-        onSave={handleSaveTemporaryPrompt}
-        stepTitle="步骤二：AI生成稿件创作大纲"
-      />
     </div>
   );
 
@@ -307,6 +311,15 @@ export default function Step2OutlineGeneratorClient() {
             <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以编辑或预览。</CardDescription>
         </div>
         <div className="flex items-center gap-2">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAiModificationModalOpen(true)}
+                disabled={!editedOutline.trim() || isLoading}
+                title="AI辅助修改大纲"
+            >
+                <WandSparkles className="mr-2 h-4 w-4" /> AI辅助修改
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -359,6 +372,22 @@ export default function Step2OutlineGeneratorClient() {
   return (
     <div className="h-[calc(100vh-8rem)] p-1 md:p-0">
       <DualPaneLayout leftPane={leftPane} rightPane={rightPane} />
+      <PromptEditModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        defaultPromptTemplate={STEP_2_OUTLINE_GENERATION_PROMPT_TEMPLATE}
+        currentEditedPromptTemplate={getTemporaryPrompt(PROMPT_KEY_STEP2)}
+        onSave={handleSaveTemporaryPrompt}
+        stepTitle="步骤二：AI生成稿件大纲"
+      />
+      <AiModificationModal
+        isOpen={isAiModificationModalOpen}
+        onClose={() => setIsAiModificationModalOpen(false)}
+        originalContent={editedOutline}
+        onApplyModification={handleApplyOutlineModification}
+        onSaveRefinedContent={handleSaveRefinedOutline}
+        modalTitle="AI 辅助修改大纲"
+      />
     </div>
   );
 }
