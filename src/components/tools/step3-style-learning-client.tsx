@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, BrainCircuit, Copy } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { learnUserStyle, type LearnUserStyleInput } from "@/ai/flows/style-learning-flow"; 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE = "step3_manuscriptSample";
 const LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT = "app_userWritingStyleReport";
@@ -34,7 +36,10 @@ export default function Step3StyleLearningClient() {
   const saveToLocalStorage = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_MANUSCRIPT_SAMPLE, manuscriptSample);
-      localStorage.setItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT, styleAnalysisReport);
+      // Only save the report if it's not empty, to avoid overwriting with an empty string on initial load
+      if (styleAnalysisReport) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT, styleAnalysisReport);
+      }
     }
   }, [manuscriptSample, styleAnalysisReport]);
 
@@ -53,6 +58,9 @@ export default function Step3StyleLearningClient() {
       const input: LearnUserStyleInput = { manuscriptSample };
       const result = await learnUserStyle(input);
       setStyleAnalysisReport(result.styleAnalysisReport);
+      if (typeof window !== 'undefined' && result.styleAnalysisReport) {
+         localStorage.setItem(LOCAL_STORAGE_KEY_APP_USER_STYLE_REPORT, result.styleAnalysisReport);
+      }
       toast({ title: "风格分析完成！", description: "AI已学习完毕，并生成了风格分析报告。" });
     } catch (error) {
       console.error("Error learning user style:", error);
@@ -67,6 +75,7 @@ export default function Step3StyleLearningClient() {
       toast({ title: "未生成风格报告", description: "请先让AI分析您的写作风格。", variant: "destructive" });
       return;
     }
+    // Report is already saved by useEffect or handleAnalyzeStyle
     toast({ title: "风格已确认", description: "正在前往下一步进行初稿创作。" });
     router.push('/step4-draft-creation'); 
   };
@@ -76,9 +85,9 @@ export default function Step3StyleLearningClient() {
       toast({ title: "无内容可复制", description: "风格分析报告为空。", variant: "destructive" });
       return;
     }
-    navigator.clipboard.writeText(styleAnalysisReport)
+    navigator.clipboard.writeText(styleAnalysisReport) // Copies the raw Markdown
       .then(() => {
-        toast({ title: "复制成功", description: "风格分析报告已复制到剪贴板。" });
+        toast({ title: "复制成功", description: "风格分析报告 (Markdown) 已复制到剪贴板。" });
       })
       .catch(err => {
         console.error("Failed to copy style report: ", err);
@@ -116,17 +125,30 @@ export default function Step3StyleLearningClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle>AI生成的风格分析报告</CardTitle>
-            <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告 (Markdown格式)。</CardDescription>
+            <CardDescription>AI根据您提供的范文生成的详细写作风格分析报告。</CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading}>
+        <Button variant="outline" size="icon" onClick={handleCopyReport} disabled={!styleAnalysisReport.trim() || isLoading} title="复制原始Markdown报告">
             <Copy className="h-4 w-4" />
             <span className="sr-only">复制报告</span>
         </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <Label htmlFor="styleAnalysisReport" className="sr-only">风格分析报告展示区</Label>
-        <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/50 text-sm min-h-[300px] max-h-[70vh]">
-          <pre className="whitespace-pre-wrap break-all">{styleAnalysisReport || "AI风格分析报告将显示在此处..."}</pre>
+        <Label htmlFor="styleAnalysisReportDisplay" className="sr-only">风格分析报告展示区</Label>
+        <ScrollArea id="styleAnalysisReportDisplay" className="flex-1 rounded-md border p-4 bg-muted/50 text-sm min-h-[300px] max-h-[70vh]">
+          {isLoading && !styleAnalysisReport ? (
+             <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+             </div>
+          ) : styleAnalysisReport ? (
+            <ReactMarkdown 
+              className="prose dark:prose-invert max-w-none" 
+              remarkPlugins={[remarkGfm]}
+            >
+              {styleAnalysisReport}
+            </ReactMarkdown>
+          ) : (
+            <p className="text-muted-foreground">AI风格分析报告将显示在此处...</p>
+          )}
         </ScrollArea>
       </CardContent>
       <CardFooter>
@@ -144,4 +166,3 @@ export default function Step3StyleLearningClient() {
     </div>
   );
 }
-    

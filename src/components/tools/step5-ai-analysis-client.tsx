@@ -12,15 +12,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Microscope, Zap, Edit, Copy } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft"; 
 const LOCAL_STORAGE_KEY_STEP5_DRAFT_COPY = "step5_aiAnalysis_draftCopy"; 
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // This will store the full analysisReport
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
 
 export default function Step5AiAnalysisClient() {
   const router = useRouter();
   const [draftCopy, setDraftCopy] = useState("");
-  const [analysisReport, setAnalysisReport] = useState(""); // Changed from analysis and suggestions
+  const [analysisReport, setAnalysisReport] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -62,10 +64,9 @@ export default function Step5AiAnalysisClient() {
     setAnalysisReport("");
     try {
       const input: AiSignatureAnalyzerInput = { draftCopy };
-      // The flow now returns a single 'analysisReport' field
       const result = await aiSignatureAnalyzer(input); 
       setAnalysisReport(result.analysisReport);
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && result.analysisReport) {
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, result.analysisReport);
       }
       toast({
@@ -89,8 +90,8 @@ export default function Step5AiAnalysisClient() {
       toast({ title: "无内容可复制", description: "分析报告为空。", variant: "destructive" });
       return;
     }
-    navigator.clipboard.writeText(analysisReport)
-      .then(() => toast({ title: "成功！", description: "分析报告已复制到剪贴板。" }))
+    navigator.clipboard.writeText(analysisReport) // Copies the raw Markdown
+      .then(() => toast({ title: "成功！", description: "分析报告 (Markdown) 已复制到剪贴板。" }))
       .catch(err => {
         console.error("Failed to copy analysis report: ", err);
         toast({ title: "复制失败", description: "无法复制分析报告，请重试。", variant: "destructive" });
@@ -103,7 +104,6 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
-    // Ensure analysisReport is saved if generated, otherwise it's already from localStorage
     if (analysisReport.trim()) {
         localStorage.setItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS, analysisReport);
     }
@@ -117,7 +117,6 @@ export default function Step5AiAnalysisClient() {
       return;
     }
     localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, draftCopy);
-    // No need to save suggestions if skipping
     localStorage.removeItem(LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS); 
     toast({ title: "准备就绪", description: "正在跳至最终润色步骤..." });
     router.push('/step7-final-polishing'); 
@@ -156,16 +155,29 @@ export default function Step5AiAnalysisClient() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>AI特征诊断与优化指南</CardTitle>
-            <CardDescription>AI对稿件的深度分析报告 (Markdown格式)。</CardDescription>
+            <CardDescription>AI对稿件的深度分析报告。</CardDescription>
           </div>
-          <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading}>
+          <Button variant="outline" size="icon" onClick={handleCopyAnalysisReport} disabled={!analysisReport.trim() || isLoading} title="复制原始Markdown报告">
             <Copy className="h-4 w-4" />
              <span className="sr-only">复制分析报告</span>
           </Button>
         </CardHeader>
         <CardContent className="flex-1">
           <ScrollArea className="h-full max-h-[calc(65vh-7rem)] rounded-md border p-4 bg-muted/50 text-sm">
-            <pre className="whitespace-pre-wrap break-all">{analysisReport || "AI分析报告将显示在此处..."}</pre>
+            {isLoading && !analysisReport ? (
+              <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : analysisReport ? (
+              <ReactMarkdown 
+                className="prose dark:prose-invert max-w-none"
+                remarkPlugins={[remarkGfm]}
+              >
+                {analysisReport}
+              </ReactMarkdown>
+            ) : (
+              <p className="text-muted-foreground">AI分析报告将显示在此处...</p>
+            )}
           </ScrollArea>
         </CardContent>
       </Card>
@@ -186,4 +198,3 @@ export default function Step5AiAnalysisClient() {
     </div>
   );
 }
-    

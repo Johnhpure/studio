@@ -106,4 +106,81 @@
     @apply bg-background text-foreground;
     /* Font variables are applied in layout.tsx, no need to repeat here */
   }
+
+  /* Tailwind Typography prose customizations */
+  .prose {
+    color: hsl(var(--foreground));
+  }
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+  }
+  .prose :where(a):not(:where([class~="not-prose"] *)):hover {
+    color: hsl(var(--primary-foreground)); /* This might need adjustment based on primary's lightness */
+    background-color: hsl(var(--primary));
+  }
+  .prose :where(strong):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+  .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+  .prose :where(code):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--primary)); /* Or a different accent for code */
+    background-color: hsl(var(--muted));
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-weight: 600;
+  }
+  .prose :where(pre):not(:where([class~="not-prose"] *)) {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border-radius: 0.375rem;
+    padding: 1em;
+    overflow-x: auto;
+  }
+  .prose :where(pre code):not(:where([class~="not-prose"] *)) {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-weight: inherit;
+    color: inherit;
+  }
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    border-left-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Dark mode prose styles */
+  .dark .prose {
+    color: hsl(var(--foreground));
+  }
+  .dark .prose :where(a):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--primary));
+  }
+  .dark .prose :where(a):not(:where([class~="not-prose"] *)):hover {
+     color: hsl(var(--primary-foreground));
+     background-color: hsl(var(--primary));
+  }
+  .dark .prose :where(strong):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--foreground));
+  }
+  .dark .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--foreground));
+  }
+  .dark .prose :where(code):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--primary));
+    background-color: hsl(var(--muted));
+  }
+  .dark .prose :where(pre):not(:where([class~="not-prose"] *)) {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+  .dark .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    border-left-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+
 }
