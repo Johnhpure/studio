@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy } from "lucide-react";
+import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
 import ReactMarkdown from 'react-markdown';
@@ -38,6 +38,7 @@ export default function Step2OutlineGeneratorClient() {
 
   const [clientRequirements, setClientRequirements] = useState("");
   const [userInstructions, setUserInstructions] = useState("");
+  const [isPreviewingUserInstructions, setIsPreviewingUserInstructions] = useState(false);
   const [manuscriptType, setManuscriptType] = useState<string>(MANUSCRIPT_TYPES[5]); 
   const [selectedBrand, setSelectedBrand] = useState<string>(BRANDS[0]); 
   const [wordCountOption, setWordCountOption] = useState<string>(WORD_COUNT_OPTIONS[0]); 
@@ -45,6 +46,7 @@ export default function Step2OutlineGeneratorClient() {
 
   const [generatedOutline, setGeneratedOutline] = useState("");
   const [editedOutline, setEditedOutline] = useState("");
+  const [isPreviewingEditedOutline, setIsPreviewingEditedOutline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -58,9 +60,6 @@ export default function Step2OutlineGeneratorClient() {
       const initialEditedOutline = localStorage.getItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE);
       if (initialEditedOutline) {
         setEditedOutline(initialEditedOutline);
-        // If there's a saved edited outline, it implies an outline was generated before.
-        // We can set generatedOutline to it as well for consistency if needed,
-        // or assume the user wants to continue editing their last saved version.
         setGeneratedOutline(initialEditedOutline); 
       }
     }
@@ -128,7 +127,7 @@ export default function Step2OutlineGeneratorClient() {
       return;
     }
     
-    localStorage.setItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE, editedOutline); // Ensure edited outline is saved
+    localStorage.setItem(LOCAL_STORAGE_KEY_EDITED_OUTLINE, editedOutline);
     const metadata = {
         manuscriptType,
         selectedBrand,
@@ -164,7 +163,7 @@ export default function Step2OutlineGeneratorClient() {
         </CardHeader>
         <CardContent className="flex-1">
           <ScrollArea className="h-full max-h-[20vh] w-full rounded-md border p-3 bg-muted/50 text-sm">
-            {clientRequirements || "未找到甲方核心需求，请返回步骤一输入。"}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{clientRequirements || "未找到甲方核心需求，请返回步骤一输入。"}</ReactMarkdown>
           </ScrollArea>
         </CardContent>
       </Card>
@@ -175,19 +174,30 @@ export default function Step2OutlineGeneratorClient() {
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-4 overflow-y-auto max-h-[calc(60vh-4rem)]">
           <div className="grid gap-1.5 flex-shrink-0">
-            <Label htmlFor="userInstructions">创作要求与指令 (Markdown)</Label>
-            <div className="flex flex-col md:flex-row gap-2 min-h-[120px]">
-              <Textarea
-                id="userInstructions"
-                placeholder="输入您对稿件大纲结构、各部分侧重点等详细的创作要求和指令 (Markdown)..."
-                value={userInstructions}
-                onChange={(e) => setUserInstructions(e.target.value)}
-                className="text-sm resize-none flex-1 min-h-[120px] md:w-1/2"
-              />
-              <ScrollArea className="rounded-md border p-3 bg-muted/30 text-sm flex-1 min-h-[120px] md:w-1/2 prose dark:prose-invert max-w-none">
-                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{userInstructions || "指令预览..."}</ReactMarkdown>
-              </ScrollArea>
+            <div className="flex justify-between items-center mb-1.5">
+                <Label htmlFor="userInstructions">创作要求与指令 (Markdown)</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPreviewingUserInstructions(!isPreviewingUserInstructions)}
+                >
+                  {isPreviewingUserInstructions ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                  {isPreviewingUserInstructions ? "编辑" : "预览"}
+                </Button>
             </div>
+            {isPreviewingUserInstructions ? (
+                 <ScrollArea className="rounded-md border p-3 bg-muted/30 text-sm flex-1 min-h-[120px] prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{userInstructions || "指令预览..."}</ReactMarkdown>
+                 </ScrollArea>
+            ) : (
+                <Textarea
+                  id="userInstructions"
+                  placeholder="输入您对稿件大纲结构、各部分侧重点等详细的创作要求和指令 (Markdown)..."
+                  value={userInstructions}
+                  onChange={(e) => setUserInstructions(e.target.value)}
+                  className="text-sm resize-none flex-1 min-h-[120px]"
+                />
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
             <div>
@@ -246,32 +256,39 @@ export default function Step2OutlineGeneratorClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />AI生成的稿件大纲</CardTitle>
-            <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以在下方文本框中进行编辑和修改，右侧为实时预览。</CardDescription>
+            <CardDescription>AI根据您的需求和指令生成的大纲初稿。您可以切换编辑/预览模式，或直接复制Markdown。</CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={handleCopyOutline} disabled={!editedOutline.trim() || isLoading} title="复制大纲Markdown">
-            <Copy className="h-4 w-4" />
-            <span className="sr-only">复制大纲</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPreviewingEditedOutline(!isPreviewingEditedOutline)}
+            >
+              {isPreviewingEditedOutline ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+              {isPreviewingEditedOutline ? "编辑" : "预览"}
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleCopyOutline} disabled={!editedOutline.trim() || isLoading} title="复制大纲Markdown">
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">复制大纲</span>
+            </Button>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
-        <div className="flex-1 flex flex-col md:w-1/2">
-            <Label htmlFor="editedOutline" className="mb-1.5">大纲编辑区 (Markdown)</Label>
+      <CardContent className="flex-1 flex flex-col">
+        {isPreviewingEditedOutline ? (
+             <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {editedOutline || "大纲预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
+        ) : (
             <Textarea
               id="editedOutline"
               placeholder="AI生成的大纲将显示在此处，您可以直接编辑..."
               value={editedOutline}
               onChange={(e) => setEditedOutline(e.target.value)}
-              className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30"
+              className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30" // Ensure it takes up space
             />
-        </div>
-        <div className="flex-1 flex flex-col md:w-1/2">
-            <Label className="mb-1.5">实时预览区</Label>
-            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {editedOutline || "大纲预览将在此处显示..."}
-              </ReactMarkdown>
-            </ScrollArea>
-        </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button onClick={handleConfirmOutline} className="w-full" disabled={!editedOutline.trim() || isLoading}>

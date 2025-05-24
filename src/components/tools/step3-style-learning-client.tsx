@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowRight, Wand2, BrainCircuit, Copy } from "lucide-react"; 
+import { Loader2, ArrowRight, Wand2, BrainCircuit, Copy, Eye, Edit3 } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { learnUserStyle, type LearnUserStyleInput } from "@/ai/flows/style-learning-flow"; 
 import ReactMarkdown from 'react-markdown';
@@ -23,6 +23,7 @@ export default function Step3StyleLearningClient() {
   const { toast } = useToast();
 
   const [manuscriptSample, setManuscriptSample] = useState("");
+  const [isPreviewingSample, setIsPreviewingSample] = useState(false);
   const [styleAnalysisReport, setStyleAnalysisReport] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -96,28 +97,35 @@ export default function Step3StyleLearningClient() {
   const leftPane = (
     <Card className="flex-1 flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center"><BrainCircuit className="mr-2 h-5 w-5" />输入您的风格范文</CardTitle>
-        <CardDescription>在此粘贴一篇能代表您个人写作风格的稿件范例。左侧为Markdown输入区，右侧为实时预览区。</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
-        <div className="flex-1 flex flex-col md:w-1/2">
-          <Label htmlFor="manuscriptSample" className="mb-1.5">风格范文 (Markdown)</Label>
-          <Textarea
-            id="manuscriptSample"
-            placeholder="在此处粘贴您的稿件范例 (Markdown)..."
-            value={manuscriptSample}
-            onChange={(e) => setManuscriptSample(e.target.value)}
-            className="flex-1 resize-none text-sm min-h-[300px]"
-          />
+        <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center"><BrainCircuit className="mr-2 h-5 w-5" />输入您的风格范文</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPreviewingSample(!isPreviewingSample)}
+            >
+              {isPreviewingSample ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+              {isPreviewingSample ? "编辑" : "预览"}
+            </Button>
         </div>
-        <div className="flex-1 flex flex-col md:w-1/2">
-            <Label className="mb-1.5">实时预览</Label>
+        <CardDescription>在此粘贴一篇能代表您个人写作风格的稿件范例。AI将学习其特征。</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col">
+        {isPreviewingSample ? (
             <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {manuscriptSample || "范文预览将在此处显示..."}
               </ReactMarkdown>
             </ScrollArea>
-        </div>
+        ) : (
+            <Textarea
+              id="manuscriptSample"
+              placeholder="在此处粘贴您的稿件范例 (Markdown)..."
+              value={manuscriptSample}
+              onChange={(e) => setManuscriptSample(e.target.value)}
+              className="flex-1 resize-none text-sm min-h-[300px]"
+            />
+        )}
       </CardContent>
       <CardFooter>
         <Button onClick={handleAnalyzeStyle} disabled={isLoading} className="w-full">
@@ -142,14 +150,13 @@ export default function Step3StyleLearningClient() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <Label htmlFor="styleAnalysisReportDisplay" className="sr-only">风格分析报告展示区</Label>
-        <ScrollArea id="styleAnalysisReportDisplay" className="flex-1 rounded-md border p-4 bg-muted/50 text-sm min-h-[300px] max-h-[70vh]">
+        <ScrollArea id="styleAnalysisReportDisplay" className="flex-1 rounded-md border p-4 bg-muted/50 text-sm min-h-[300px] max-h-[calc(100vh-16rem)] prose dark:prose-invert max-w-none">
           {isLoading && !styleAnalysisReport ? (
              <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
              </div>
           ) : styleAnalysisReport ? (
             <ReactMarkdown 
-              className="prose dark:prose-invert max-w-none" 
               remarkPlugins={[remarkGfm]}
             >
               {styleAnalysisReport}

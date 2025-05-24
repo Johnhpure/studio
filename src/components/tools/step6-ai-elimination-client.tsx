@@ -10,20 +10,20 @@ import { Label } from "@/components/ui/label";
 import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { aiAssistedRefinement, type AiAssistedRefinementInput } from "@/ai/flows/ai-assisted-refinement";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkle, Copy, ArrowRight, Info, FileText, ListChecks, Palette, Edit } from "lucide-react";
+import { Loader2, Sparkle, Copy, ArrowRight, Info, FileText, ListChecks, Palette, Edit, Eye, Edit3 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 const LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT = "app_currentDraft";
-const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; // Analysis report from step 5
-const LOCAL_STORAGE_KEY_APP_USER_STYLE = "app_userWritingStyleReport"; // Style report from step 3
+const LOCAL_STORAGE_KEY_APP_AI_SUGGESTIONS = "app_aiSuggestions"; 
+const LOCAL_STORAGE_KEY_APP_USER_STYLE = "app_userWritingStyleReport"; 
 const LOCAL_STORAGE_KEY_CLIENT_REQUIREMENTS = "step1_clientRequirements";
 const LOCAL_STORAGE_KEY_EDITED_OUTLINE = "step2_editedOutline";
 const LOCAL_STORAGE_KEY_FINAL_OUTLINE_METADATA = "step2_finalOutline_metadata";
 
 const LOCAL_STORAGE_KEY_STEP6_EXTRA_INSTRUCTIONS = "step6_extraInstructions";
-const LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT = "step6_refinedDraft"; // Stores the output of this step
+const LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT = "step6_refinedDraft"; 
 
 
 interface OutlineMetadata {
@@ -38,12 +38,16 @@ export default function Step6AiEliminationClient() {
   const { toast } = useToast();
 
   const [draftToRefine, setDraftToRefine] = useState("");
-  const [aiAnalysisReport, setAiAnalysisReport] = useState(""); // From step 5
-  const [userWritingStyle, setUserWritingStyle] = useState(""); // From step 3
-  const [clientRequirementsAndOutline, setClientRequirementsAndOutline] = useState(""); // Combined from step 1 & 2
+  const [aiAnalysisReport, setAiAnalysisReport] = useState(""); 
+  const [userWritingStyle, setUserWritingStyle] = useState(""); 
+  const [clientRequirementsAndOutline, setClientRequirementsAndOutline] = useState(""); 
 
   const [extraInstructions, setExtraInstructions] = useState("");
-  const [refinedDraft, setRefinedDraft] = useState(""); // Output of this step
+  const [isPreviewingExtraInstructions, setIsPreviewingExtraInstructions] = useState(false);
+  
+  const [refinedDraft, setRefinedDraft] = useState(""); 
+  const [isPreviewingRefinedDraft, setIsPreviewingRefinedDraft] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -65,7 +69,6 @@ export default function Step6AiEliminationClient() {
       setClientRequirementsAndOutline(`甲方核心需求：\n${req}\n\n创作大纲与参数：\n${outline}\n${metadataText}`);
 
       setExtraInstructions(localStorage.getItem(LOCAL_STORAGE_KEY_STEP6_EXTRA_INSTRUCTIONS) || "");
-      // Load the draft refined in this step if it exists, otherwise it will be generated
       setRefinedDraft(localStorage.getItem(LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT) || "");
     }
   }, []);
@@ -85,7 +88,6 @@ export default function Step6AiEliminationClient() {
     setRefinedDraft(newDraft);
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY_STEP6_REFINED_DRAFT, newDraft);
-      // Also update app_currentDraft so if user navigates away and back, or to step 7, it's the latest.
       localStorage.setItem(LOCAL_STORAGE_KEY_APP_CURRENT_DRAFT, newDraft);
     }
   };
@@ -111,7 +113,7 @@ export default function Step6AiEliminationClient() {
         extraOptimizationInstructions: extraInstructions.trim() || undefined,
       };
       const result = await aiAssistedRefinement(input);
-      handleRefinedDraftChange(result.refinedText); // Use the handler to save to LS
+      handleRefinedDraftChange(result.refinedText); 
       toast({
         title: "成功！",
         description: "稿件已完成AI特征消除与优化。",
@@ -154,18 +156,14 @@ export default function Step6AiEliminationClient() {
     router.push('/step7-final-polishing'); 
   };
 
-  const ReviewItem = ({ title, content, icon: Icon, isMarkdown = true }: { title: string; content: string; icon?: React.ElementType, isMarkdown?: boolean }) => (
+  const ReviewItem = ({ title, content, icon: Icon }: { title: string; content: string; icon?: React.ElementType }) => (
     <div className="mb-2">
       <Label className="text-xs font-medium flex items-center mb-0.5">
         {Icon && <Icon className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />}
         {title}
       </Label>
-      <ScrollArea className="min-h-[60px] max-h-[15vh] w-full rounded-md border p-2 bg-muted/30 text-xs">
-         {isMarkdown ? (
-             <ReactMarkdown className="prose dark:prose-invert max-w-none" remarkPlugins={[remarkGfm]}>{content || "无相关信息"}</ReactMarkdown>
-         ) : (
-            <pre className="whitespace-pre-wrap break-all">{content || "无相关信息"}</pre>
-         )}
+      <ScrollArea className="min-h-[60px] max-h-[15vh] w-full rounded-md border p-2 bg-muted/30 text-xs prose dark:prose-invert max-w-none">
+         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || "无相关信息"}</ReactMarkdown>
       </ScrollArea>
     </div>
   );
@@ -178,28 +176,39 @@ export default function Step6AiEliminationClient() {
           <CardDescription className="text-xs">AI将依据以下信息进行优化，您也可以提供额外指令。</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto space-y-1.5 px-4 pt-0 pb-2 text-xs">
-          <ReviewItem title="待优化稿件原文 (步骤四/五)" content={draftToRefine} icon={FileText} isMarkdown />
-          <ReviewItem title="AI特征分析与建议 (步骤五)" content={aiAnalysisReport} icon={ListChecks} isMarkdown />
-          <ReviewItem title="写作风格参考 (步骤三)" content={userWritingStyle} icon={Palette} isMarkdown />
-          <ReviewItem title="甲方需求与大纲 (步骤一/二)" content={clientRequirementsAndOutline} icon={FileText} isMarkdown />
+          <ReviewItem title="待优化稿件原文 (步骤四/五)" content={draftToRefine} icon={FileText} />
+          <ReviewItem title="AI特征分析与建议 (步骤五)" content={aiAnalysisReport} icon={ListChecks} />
+          <ReviewItem title="写作风格参考 (步骤三)" content={userWritingStyle} icon={Palette} />
+          <ReviewItem title="甲方需求与大纲 (步骤一/二)" content={clientRequirementsAndOutline} icon={FileText} />
           
           <div>
-            <Label htmlFor="extraInstructions" className="text-xs font-medium flex items-center mb-0.5">
-                <Edit className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
-                额外优化指令 (可选, Markdown)
-            </Label>
-             <div className="flex flex-col md:flex-row gap-2 min-h-[80px] max-h-[18vh]">
+            <div className="flex justify-between items-center mb-0.5">
+                <Label htmlFor="extraInstructions" className="text-xs font-medium flex items-center">
+                    <Edit className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                    额外优化指令 (可选, Markdown)
+                </Label>
+                <Button
+                  variant="outline"
+                  size="xs" 
+                  onClick={() => setIsPreviewingExtraInstructions(!isPreviewingExtraInstructions)}
+                >
+                  {isPreviewingExtraInstructions ? <Edit3 className="mr-1 h-3 w-3" /> : <Eye className="mr-1 h-3 w-3" />}
+                  {isPreviewingExtraInstructions ? "编辑" : "预览"}
+                </Button>
+            </div>
+            {isPreviewingExtraInstructions ? (
+                <ScrollArea className="rounded-md border p-2 bg-muted/30 text-xs flex-1 min-h-[80px] max-h-[18vh] prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{extraInstructions || "指令预览..."}</ReactMarkdown>
+                 </ScrollArea>
+            ) : (
                 <Textarea
                   id="extraInstructions"
                   placeholder="例如：请特别注意保持品牌调性一致..."
                   value={extraInstructions}
                   onChange={(e) => setExtraInstructions(e.target.value)}
-                  className="text-xs resize-none flex-1 md:w-1/2 min-h-[80px]"
+                  className="text-xs resize-none flex-1 w-full min-h-[80px] max-h-[18vh]"
                 />
-                <ScrollArea className="rounded-md border p-2 bg-muted/30 text-xs flex-1 md:w-1/2 min-h-[80px] prose dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{extraInstructions || "指令预览..."}</ReactMarkdown>
-                </ScrollArea>
-            </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="px-4 pb-3 pt-2">
@@ -217,16 +226,31 @@ export default function Step6AiEliminationClient() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle>优化后稿件</CardTitle>
-            <CardDescription>经AI特征消除和优化后的稿件。左侧为Markdown编辑区，右侧为实时预览。</CardDescription>
+            <CardDescription>经AI特征消除和优化后的稿件。可切换编辑/预览模式。</CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(refinedDraft, "优化后稿件")} disabled={!refinedDraft.trim() || isLoading} title="复制优化稿Markdown">
-            <Copy className="h-4 w-4" />
-            <span className="sr-only">复制优化后稿件</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPreviewingRefinedDraft(!isPreviewingRefinedDraft)}
+            >
+              {isPreviewingRefinedDraft ? <Edit3 className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+              {isPreviewingRefinedDraft ? "编辑" : "预览"}
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(refinedDraft, "优化后稿件")} disabled={!refinedDraft.trim() || isLoading} title="复制优化稿Markdown">
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">复制优化后稿件</span>
+            </Button>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col md:flex-row gap-2">
-        <div className="flex-1 flex flex-col md:w-1/2">
-            <Label htmlFor="refinedDraftOutput" className="mb-1.5">优化稿编辑区 (Markdown)</Label>
+      <CardContent className="flex-1 flex flex-col">
+        {isPreviewingRefinedDraft ? (
+            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {refinedDraft || "优化稿预览将在此处显示..."}
+              </ReactMarkdown>
+            </ScrollArea>
+        ) : (
             <Textarea
               id="refinedDraftOutput"
               placeholder="AI优化后的稿件将显示在此处..."
@@ -234,15 +258,7 @@ export default function Step6AiEliminationClient() {
               onChange={(e) => handleRefinedDraftChange(e.target.value)} 
               className="flex-1 resize-none text-sm min-h-[300px] bg-muted/30"
             />
-        </div>
-        <div className="flex-1 flex flex-col md:w-1/2">
-            <Label className="mb-1.5">实时预览区</Label>
-            <ScrollArea className="flex-1 rounded-md border p-4 bg-muted/30 min-h-[300px] prose dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {refinedDraft || "优化稿预览将在此处显示..."}
-              </ReactMarkdown>
-            </ScrollArea>
-        </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button onClick={handleProceedToFinalPolishing} className="w-full" disabled={isLoading || (!refinedDraft.trim() && !draftToRefine.trim())}>
