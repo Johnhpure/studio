@@ -14,13 +14,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger, // Added missing import
 } from "@/components/ui/alert-dialog";
 import { FilePlus2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTemporaryPrompts } from "@/contexts/TemporaryPromptsContext";
-import type { PromptStepKey } from "@/ai/prompt-templates";
-
 
 interface AppHeaderProps {
   title: string;
@@ -40,32 +38,35 @@ const localStorageKeysToClear = [
   "step4_tempInstructions",
   "app_currentDraft",
   "step5_aiAnalysis_draftCopy",
-  "app_aiSuggestions", // This stores the full analysis report from step 5
+  "app_aiSuggestions", // This stores the full analysis report from Step 5
   "step6_extraInstructions",
   "step6_refinedDraft",
 ];
 
 export function AppHeader({ title }: AppHeaderProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { clearAllTemporaryPrompts } = useTemporaryPrompts();
   const [isAlertDialogOpen, setIsAlertDialogOpen] = React.useState(false);
 
   const handleStartNewCreation = () => {
-    // Clear localStorage
     localStorageKeysToClear.forEach(key => {
-      localStorage.removeItem(key);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(key);
+      }
     });
 
-    // Clear temporary prompts from context
     clearAllTemporaryPrompts();
 
     toast({
       title: "新创作已开始",
-      description: "所有流程数据已清空。",
+      description: "所有流程数据已清空。正在刷新并跳转到第一步...",
     });
-    router.push('/step1-requirements');
-    setIsAlertDialogOpen(false); // Close dialog after action
+    
+    setIsAlertDialogOpen(false); // Close dialog before navigation
+
+    if (typeof window !== 'undefined') {
+      window.location.href = '/step1-requirements';
+    }
   };
 
   return (
