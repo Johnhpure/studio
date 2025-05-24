@@ -87,7 +87,7 @@ export function AiModificationModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[80vw] lg:max-w-[70vw] xl:max-w-[60vw] max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>
             在此输入您的修改指令，AI将根据您的指令优化原始内容。
@@ -95,7 +95,7 @@ export function AiModificationModal({
         </DialogHeader>
 
         {/* Top: User Prompt Input */}
-        <div className="py-2">
+        <div className="py-2 shrink-0">
           <Label htmlFor="ai-mod-user-prompt" className="text-sm font-medium">您的修改指令 (提示词)</Label>
           <Textarea
             id="ai-mod-user-prompt"
@@ -107,9 +107,9 @@ export function AiModificationModal({
         </div>
 
         {/* Middle: Original Content Display */}
-        <div className="py-2 flex-1 flex flex-col min-h-[25vh]">
-          <Label className="text-sm font-medium mb-1">原始内容 (只读)</Label>
-          <ScrollArea className="flex-grow rounded-md border bg-muted/30">
+        <div className="py-2 flex-1 flex flex-col min-h-0"> {/* Key change: min-h-0 */}
+          <Label className="text-sm font-medium mb-1 shrink-0">原始内容 (只读)</Label>
+          <ScrollArea className="flex-1 rounded-md border bg-muted/30"> {/* Key change: flex-1 */}
             <div className="p-3 prose dark:prose-invert max-w-none text-xs">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{originalContent || "无原始内容。"}</ReactMarkdown>
             </div>
@@ -117,9 +117,9 @@ export function AiModificationModal({
         </div>
 
         {/* Bottom: AI Refined Result Display */}
-        <div className="py-2 flex-1 flex flex-col min-h-[25vh]">
-          <Label className="text-sm font-medium mb-1">AI优化结果 (只读)</Label>
-          <ScrollArea className="flex-grow rounded-md border bg-muted/50">
+        <div className="py-2 flex-1 flex flex-col min-h-0"> {/* Key change: min-h-0 */}
+          <Label className="text-sm font-medium mb-1 shrink-0">AI优化结果 (只读)</Label>
+          <ScrollArea className="flex-1 rounded-md border bg-muted/50"> {/* Key change: flex-1 */}
              <div className="p-3 prose dark:prose-invert max-w-none text-xs">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
@@ -135,7 +135,7 @@ export function AiModificationModal({
           </ScrollArea>
         </div>
         
-        <DialogFooter className="mt-4 flex-col sm:flex-row sm:justify-between">
+        <DialogFooter className="mt-4 flex-col sm:flex-row sm:justify-between shrink-0">
           <Button type="button" onClick={handleApplyAi} disabled={isLoading || !currentUserPrompt.trim()}>
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <WandSparkles className="mr-2 h-4 w-4" />}
             {isLoading ? "处理中..." : "应用AI修改"}
@@ -156,4 +156,3 @@ export function AiModificationModal({
     </Dialog>
   );
 }
-
