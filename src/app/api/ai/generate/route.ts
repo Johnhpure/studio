@@ -1,84 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAIInstance } from '@/ai/genkit';
+import { generateContentWithGemini, getEffectiveApiKey } from '@/lib/ai-server';
+import type { GeminiModelId } from '@/lib/ai-client';
 
-// AI 生成请求的通用处理器
+// AI 生成请求的通用处理器 - 使用Google官方Gemini SDK
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { 
       prompt, 
       apiKey, 
-      flowType, 
-      flowInput,
-      outputSchema 
+      model = 'gemini-2.5-flash',
+      temperature = 0.7,
+      maxTokens = 2048,
+      outputSchema,
+      systemInstruction,
+      tools
     } = body;
 
-    // 获取用户的 API key（从请求体或 localStorage 传递）
-    const userApiKey = apiKey || null;
+    // 获取有效的API key
+    const effectiveApiKey = getEffectiveApiKey(apiKey);
     
-    // 获取 AI 实例（如果有用户 API key 则使用，否则使用环境变量）
-    const ai = getAIInstance(userApiKey);
-
-    let result;
-
-    switch (flowType) {
-      case 'generate':
-        // 通用文本生成
-        result = await ai.generate({
-          prompt: prompt,
-          model: 'googleai/gemini-2.5-pro-preview-05-06',
-          output: outputSchema ? { schema: outputSchema } : undefined
-        });
-        break;
-
-      case 'flow':
-        // 执行特定的 flow
-        if (!flowInput) {
-          return NextResponse.json(
-            { success: false, message: 'Flow input is required for flow type requests' },
-            { status: 400 }
-          );
-        }
-
-        // 这里可以根据 flowInput.flowName 来调用不同的 flow
-        // 暂时返回错误，需要根据具体 flow 实现
-        return NextResponse.json(
-          { success: false, message: 'Flow type not implemented yet' },
-          { status: 501 }
-        );
-
-      default:
-        return NextResponse.json(
-          { success: false, message: 'Invalid flow type' },
-          { status: 400 }
-        );
+    if (!effectiveApiKey) {
+      return NextResponse.json(
+        { success: false, message: 'API key is required. Please configure GOOGLE_API_KEY environment variable or provide apiKey parameter.' },
+        { status: 401 }
+      );
     }
+
+    if (!prompt) {
+      return NextResponse.json(
+        { success: false, message: 'Prompt is required' },
+        { status: 400 }
+      );
+    }
+
+    // 构建服务端AI配置
+    const aiConfig = {
+      apiKey: effectiveApiKey,
+      model: model as GeminiModelId,
+      temperature: Number(temperature),
+      maxTokens: Number(maxTokens),
+      systemInstruction,
+    };
+
+    // 使用官方SDK生成内容
+    const response = await generateContentWithGemini(aiConfig, prompt, {
+      outputSchema,
+      tools,
+    });
+
+    // 提取生成的文本
+    const generatedText = response.text();
 
     return NextResponse.json({
       success: true,
-      data: result.output || result.text || result,
+      data: generatedText,
+      usage: {
+        promptTokens: response.usageMetadata?.promptTokenCount || 0,
+        completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
+        totalTokens: response.usageMetadata?.totalTokenCount || 0,
+      }
     });
 
   } catch (error: any) {
     console.error('AI generation error:', error);
     
-    // 检查是否是 API key 相关错误
-    if (error.message?.includes('API key') || error.message?.includes('authentication')) {
+    // 处理常见的 API 错误
+    if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key')) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'API 密钥无效或已过期，请在设置页面重新配置',
-          errorType: 'authentication'
-        },
+        { success: false, message: 'API key 无效，请检查密钥是否正确' },
         { status: 401 }
+      );
+    }
+    
+    if (error.message?.includes('QUOTA_EXCEEDED') || error.message?.includes('quota')) {
+      return NextResponse.json(
+        { success: false, message: 'API 配额已用完，请检查计费设置' },
+        { status: 429 }
+      );
+    }
+
+    if (error.message?.includes('PERMISSION_DENIED')) {
+      return NextResponse.json(
+        { success: false, message: 'API key 权限不足，请检查权限设置' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message?.includes('SAFETY')) {
+      return NextResponse.json(
+        { success: false, message: '内容被安全过滤器阻止，请修改提示内容' },
+        { status: 400 }
       );
     }
 
     return NextResponse.json(
       { 
         success: false, 
-        message: '生成请求失败，请稍后重试',
-        errorType: 'generation'
+        message: error.message || '生成过程中发生错误' 
       },
       { status: 500 }
     );

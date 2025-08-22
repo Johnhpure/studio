@@ -14,8 +14,7 @@ import { DualPaneLayout } from "@/components/ui/dual-pane-layout";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight, Wand2, FileText, ListChecks, Copy, Eye, Edit3, SkipForward, FilePenLine, WandSparkles } from "lucide-react"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateOutline, type GenerateOutlineInput } from "@/ai/flows/outline-generation-flow";
-import { refineTextWithPrompt, type RefineTextWithPromptInput, type RefineTextWithPromptOutput } from "@/ai/flows/generic-text-refinement-flow";
+import { callAIFlow } from "@/lib/ai-client";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PromptEditModal } from "@/components/layout/prompt-edit-modal"; 
@@ -128,8 +127,12 @@ export default function Step2OutlineGeneratorClient() {
         wordCount: wordCountValue,
         overridePromptTemplate: temporaryPrompt,
       };
-      const result = await generateOutline(input);
-      setEditedOutline(result.generatedOutline); 
+      const result = await callAIFlow('generateOutline', input);
+      if (result.success) {
+        setEditedOutline(result.data.outline);
+      } else {
+        throw new Error(result.message);
+      } 
       toast({ title: "成功", description: "稿件大纲已生成！您可以进行编辑。" });
     } catch (error) {
       console.error("Error generating outline:", error);
@@ -191,12 +194,16 @@ export default function Step2OutlineGeneratorClient() {
   };
 
   const handleApplyOutlineModification = async (originalContent: string, userPrompt: string): Promise<string> => {
-    const input: RefineTextWithPromptInput = {
+    const input = {
       originalText: originalContent,
-      userPrompt: userPrompt,
+      refinementPrompt: userPrompt,
     };
-    const result: RefineTextWithPromptOutput = await refineTextWithPrompt(input);
-    return result.refinedText;
+    const result = await callAIFlow('refineTextWithPrompt', input);
+    if (result.success) {
+      return result.data.refinedText;
+    } else {
+      throw new Error(result.message);
+    }
   };
 
   const handleSaveRefinedOutline = (refinedOutline: string) => {
