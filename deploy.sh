@@ -48,15 +48,27 @@ check_docker() {
 # 检查环境文件
 check_env() {
     if [ ! -f ".env" ]; then
-        log_warning ".env 文件不存在"
+        log_info ".env 文件不存在，创建基本配置文件"
         if [ -f "env.example" ]; then
             log_info "复制 env.example 到 .env"
             cp env.example .env
-            log_warning "请编辑 .env 文件并填入正确的配置值"
-            exit 1
+            log_info ".env 文件已创建"
+            log_info "注意：用户可以通过网站设置页面配置 API key，无需手动编辑 .env"
         else
-            log_error "env.example 文件不存在，无法创建 .env"
-            exit 1
+            log_warning "env.example 文件不存在，创建基本 .env 文件"
+            cat > .env << EOF
+# AI Studio 基本配置
+NODE_ENV=production
+PORT=3000
+HOSTNAME=0.0.0.0
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Google Gemini API 配置（可选）
+# 用户可通过网站设置页面配置，无需在此设置
+# GOOGLE_API_KEY=
+# GEMINI_API_KEY=
+EOF
+            log_info "基本 .env 文件已创建"
         fi
     fi
 }

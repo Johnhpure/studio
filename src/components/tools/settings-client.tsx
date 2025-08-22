@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
+import { Save, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { validateApiKey } from "@/lib/ai-client";
 
 const LOCAL_STORAGE_API_KEY = "app_aiApiKey";
 const LOCAL_STORAGE_API_ENDPOINT = "app_aiApiEndpoint";
@@ -15,6 +16,8 @@ const LOCAL_STORAGE_API_ENDPOINT = "app_aiApiEndpoint";
 export default function SettingsClient() {
   const [apiKey, setApiKey] = useState("");
   const [apiEndpoint, setApiEndpoint] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [isValidKey, setIsValidKey] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,6 +32,41 @@ export default function SettingsClient() {
       }
     }
   }, []);
+
+  // 验证 API key 的函数
+  const handleValidateApiKey = async () => {
+    if (!apiKey.trim()) {
+      toast({
+        title: "验证失败",
+        description: "请先输入 API 密钥",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsValidating(true);
+    setIsValidKey(null);
+
+    try {
+      const result = await validateApiKey(apiKey.trim());
+      setIsValidKey(result.success);
+      
+      toast({
+        title: result.success ? "验证成功" : "验证失败",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    } catch (error) {
+      setIsValidKey(false);
+      toast({
+        title: "验证错误",
+        description: "网络错误，请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const handleSaveSettings = () => {
     if (typeof window !== 'undefined') {
@@ -71,16 +109,59 @@ export default function SettingsClient() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="apiKey">AI API 密钥</Label>
-          <Input
-            id="apiKey"
-            type="password"
-            placeholder="输入您的 API 密钥"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <Input
+              id="apiKey"
+              type="password"
+              placeholder="输入您的 Google Gemini API 密钥"
+              value={apiKey}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setIsValidKey(null); // 重置验证状态
+              }}
+              className={isValidKey === true ? "border-green-500" : isValidKey === false ? "border-red-500" : ""}
+            />
+            <Button 
+              onClick={handleValidateApiKey}
+              disabled={isValidating || !apiKey.trim()}
+              variant="outline"
+              size="sm"
+              className="min-w-[80px]"
+            >
+              {isValidating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isValidKey === true ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : isValidKey === false ? (
+                <XCircle className="h-4 w-4 text-red-500" />
+              ) : (
+                "验证"
+              )}
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
-            您的 API 密钥用于验证对 AI 模型的请求。
+            请输入您的 Google Gemini API 密钥。获取地址：
+            <a 
+              href="https://makersuite.google.com/app/apikey" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700 underline ml-1"
+            >
+              Google AI Studio
+            </a>
           </p>
+          {isValidKey === true && (
+            <p className="text-xs text-green-600 flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" />
+              API 密钥验证成功
+            </p>
+          )}
+          {isValidKey === false && (
+            <p className="text-xs text-red-600 flex items-center gap-1">
+              <XCircle className="h-3 w-3" />
+              API 密钥验证失败，请检查密钥是否正确
+            </p>
+          )}
         </div>
         {/* TODO: FR8.1.2 Add advanced parameters (model, temperature, max tokens) here if needed */}
       </CardContent>

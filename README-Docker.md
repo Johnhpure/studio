@@ -18,19 +18,21 @@ git clone <your-repo-url> ai-studio
 cd ai-studio
 ```
 
-### 2. 配置环境变量
+### 2. 配置环境变量（可选）
 
 ```bash
 # 复制环境变量模板
 cp env.example .env
 
-# 编辑环境变量（重要！）
+# 如需要，可编辑环境变量
 nano .env
 ```
 
-**必须配置的环境变量：**
-- `GOOGLE_API_KEY` 或 `GEMINI_API_KEY`: Google Gemini API 密钥
-- `NEXT_PUBLIC_APP_URL`: 您的服务器访问地址
+**注意：API key 配置方式已更新**
+- ✅ **推荐方式**：通过网站设置页面配置 API key（用户友好）
+- ⚙️ **可选方式**：通过环境变量配置（管理员使用）
+  - `GOOGLE_API_KEY` 或 `GEMINI_API_KEY`: Google Gemini API 密钥
+  - `NEXT_PUBLIC_APP_URL`: 您的服务器访问地址
 
 ### 3. 一键部署
 
@@ -45,6 +47,16 @@ docker-compose up -d --build
 ### 4. 访问应用
 
 打开浏览器访问: `http://your-server-ip:3000`
+
+### 5. 配置 API 密钥
+
+首次访问应用后：
+1. 点击导航栏中的"设置"
+2. 输入您的 Google Gemini API 密钥
+3. 点击"验证"按钮确认密钥有效
+4. 点击"保存设置"完成配置
+
+**获取 API 密钥**: [Google AI Studio](https://makersuite.google.com/app/apikey)
 
 ## 🛠️ 部署脚本使用
 
@@ -110,12 +122,14 @@ ai-studio/
 
 ## 🔐 环境变量配置
 
-### 必需配置
+### 基本配置
 
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `GOOGLE_API_KEY` | Google Gemini API 密钥 | `AIza...` |
-| `NEXT_PUBLIC_APP_URL` | 应用访问地址 | `http://192.168.1.100:3000` |
+| 变量名 | 说明 | 示例 | 必需 |
+|--------|------|------|------|
+| `NEXT_PUBLIC_APP_URL` | 应用访问地址 | `http://192.168.1.100:3000` | 否 |
+| `GOOGLE_API_KEY` | Google Gemini API 密钥 | `AIza...` | 否* |
+
+*注意：API key 可通过网站设置页面配置，无需环境变量
 
 ### 可选配置
 

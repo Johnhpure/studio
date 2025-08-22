@@ -236,7 +236,7 @@ export default function Step4DraftCreationClient() {
                 </Label>
                 <Button
                   variant="outline"
-                  size="xs"
+                  size="sm"
                   onClick={() => setIsPreviewingTempInstructions(!isPreviewingTempInstructions)}
                   disabled={!tempFineTuneInstructions.trim()}
                 >

@@ -216,7 +216,7 @@ export default function Step6AiEliminationClient() {
                 </Label>
                 <Button
                   variant="outline"
-                  size="xs" 
+                  size="sm" 
                   onClick={() => setIsPreviewingExtraInstructions(!isPreviewingExtraInstructions)}
                   disabled={!extraInstructions.trim()}
                 >
