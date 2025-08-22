@@ -1,28 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
-
-// 动态创建 AI 实例的函数
-function createAIInstance(apiKey?: string) {
-  if (apiKey) {
-    // 使用用户提供的 API key
-    return genkit({
-      plugins: [googleAI({ apiKey })],
-      model: 'googleai/gemini-2.5-pro-preview-05-06',
-    });
-  } else {
-    // 使用环境变量中的 API key（回退选项）
-    return genkit({
-      plugins: [googleAI()],
-      model: 'googleai/gemini-2.5-pro-preview-05-06',
-    });
-  }
-}
+import { createDynamicAI } from '@/lib/ai-server';
 
 // 验证 API key 的函数
 async function validateApiKey(apiKey: string): Promise<boolean> {
   try {
-    const ai = createAIInstance(apiKey);
+    const ai = createDynamicAI(apiKey);
     
     // 发送一个简单的测试请求
     const { output } = await ai.generate({
@@ -72,5 +54,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 导出动态 AI 实例创建函数供其他模块使用
-export { createAIInstance };
+// 注意：此文件只能在服务端使用

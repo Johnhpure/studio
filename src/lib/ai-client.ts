@@ -1,8 +1,5 @@
 // AI 客户端工具函数
-// 用于在前端和后端之间传递 API key 和处理 AI 请求
-
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+// 用于前端和后端之间的 API key 管理和 API 调用
 
 // 从 localStorage 获取 API key 的工具函数
 export function getStoredApiKey(): string | null {
@@ -39,26 +36,6 @@ export async function validateApiKey(apiKey: string): Promise<{ success: boolean
       message: '网络错误，无法验证 API key'
     };
   }
-}
-
-// 服务端动态创建 AI 实例（供服务端组件使用）
-export function createDynamicAI(apiKey?: string) {
-  // 优先使用传入的 apiKey，然后是环境变量
-  const effectiveApiKey = apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-  
-  if (!effectiveApiKey) {
-    throw new Error('No API key available. Please configure GOOGLE_API_KEY environment variable or provide apiKey parameter.');
-  }
-
-  return genkit({
-    plugins: [googleAI({ apiKey: effectiveApiKey })],
-    model: 'googleai/gemini-2.5-pro-preview-05-06',
-  });
-}
-
-// 获取有效的 API key（服务端使用）
-export function getEffectiveApiKey(userApiKey?: string): string | null {
-  return userApiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || null;
 }
 
 // 通用 AI 生成请求函数（前端使用）
